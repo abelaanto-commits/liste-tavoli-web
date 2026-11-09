@@ -227,7 +227,7 @@ async function onForm(ev){const form=ev.target;if(!form.id)return;ev.preventDefa
   if(!admin())throw new Error('Solo un amministratore può salvare eventi.');
   const startDate=String(obj.deadline_date||'');
   const startTime=String(obj.deadline_time||'');
-  if(!/^\\d{4}-\\d{2}-\\d{2}$/.test(startDate)||!/^\\d{2}:\\d{2}$/.test(startTime))throw new Error('Inserisci data e ora di chiusura valide.');
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(startDate)||!/^\d{2}:\d{2}$/.test(startTime))throw new Error('Inserisci data e ora di chiusura valide.');
   const enteredDate=new Date(startDate+'T'+startTime+':00');
   if(!Number.isFinite(enteredDate.getTime()))throw new Error('Inserisci una data di chiusura valida.');
   const payload={
