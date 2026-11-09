@@ -66,7 +66,7 @@ function renderAuth(){
 }
 function shell(body){
  const e=current();const name=s.me.full_name||s.session?.user?.email;
- root.innerHTML=`<div class="app-shell"><aside class="side"><div class="brand"><div class="logo">LT</div> Liste Tavoli</div><nav class="nav">${routes().map(r=>`<button data-action="page" data-page="${r}" class="${s.page===r?'active':''}"><span>${icon[r]}</span> ${label[r]}</button>`).join('')}</nav><div class="sidefoot">${esc(name)}<br><span class="muted">${admin()?'Amministratore':staff()?'Addetto liste':'Capogruppo'}</span><br><button data-action="logout" class="btn small" style="margin-top:9px">Esci</button></div></aside><main class="content"><div class="topbar"><div class="heading"><h1>${label[s.page]}</h1><p>${e?esc(e.title)+' · '+dtime(e.event_date+'T12:00:00'): 'Gestionale eventi privato'}</p></div><select id="eventSelect" class="event-select" aria-label="Seleziona evento">${s.events.length?s.events.map(e=>`<option value="${e.id}" ${e.id===s.eventId?'selected':''}>${esc(e.title)} · ${esc(e.event_date)}</option>`).join(''):'<option value="">Nessun evento</option>'}</select></div>${body}<div class="footer-info">Liste Tavoli · Dati protetti da Supabase · Accesso riservato · Versione 1.6</div></main></div>${s.modal||''}`;
+ root.innerHTML=`<div class="app-shell"><aside class="side"><div class="brand"><div class="logo">LT</div> Liste Tavoli</div><nav class="nav">${routes().map(r=>`<button data-action="page" data-page="${r}" class="${s.page===r?'active':''}"><span>${icon[r]}</span> ${label[r]}</button>`).join('')}</nav><div class="sidefoot">${esc(name)}<br><span class="muted">${admin()?'Amministratore':staff()?'Addetto liste':'Capogruppo'}</span><br><button data-action="logout" class="btn small" style="margin-top:9px">Esci</button></div></aside><main class="content"><div class="topbar"><div class="heading"><h1>${label[s.page]}</h1><p>${e?esc(e.title)+' · '+dtime(e.event_date+'T12:00:00'): 'Gestionale eventi privato'}</p></div><select id="eventSelect" class="event-select" aria-label="Seleziona evento">${s.events.length?s.events.map(e=>`<option value="${e.id}" ${e.id===s.eventId?'selected':''}>${esc(e.title)} · ${esc(e.event_date)}</option>`).join(''):'<option value="">Nessun evento</option>'}</select></div>${body}<div class="footer-info">Liste Tavoli · Dati protetti da Supabase · Accesso riservato · Versione 1.7</div></main></div>${s.modal||''}`;
 }
 function dashboard(){const e=current(),ts=eventTables(),count=s.guests.length,st=s.me.role;
  if(!e)return `<div class="card placeholder">${admin()?'Crea il primo evento nella sezione Eventi.':'Non sei ancora assegnato a un evento. Contatta l’amministratore.'}</div>`;
@@ -101,11 +101,26 @@ function checkinPage(){const e=current();if(!e)return '<div class="card placehol
 function exportsPage(){if(!admin())return '';return `<div class="card"><div class="card-header"><h2>PDF della serata</h2><button class="btn primary" data-action="generatePdf" ${current()?'':'disabled'}>Genera e salva PDF</button></div><div class="notice">Il PDF ordina automaticamente tavoli per nome e invitati per nome, poi cognome, nel formato A4 a tre colonne. Il download è immediato. L’invio automatico per email non è ancora configurato.</div><div class="stack">${s.exports.map(x=>`<div class="flex between"><span><strong>Versione ${x.version}</strong> · ${dtime(x.created_at)}</span><button class="btn small" data-action="openPdf" data-path="${esc(x.file_path)}">Apri PDF</button></div>`).join('')||'<p class="muted small">Nessun PDF salvato per questo evento.</p>'}</div></div>`;}
 function profilePage(){return `<div class="card"><h2>Il mio account</h2><p><strong>${esc(s.me.full_name)}</strong></p><p class="small muted">${esc(s.session.user.email||'')}</p><p>Ruolo: <span class="badge">${admin()?'Amministratore':staff()?'Addetto liste':'Capogruppo'}</span></p><button class="btn primary" data-action="changePassword">Cambia o imposta password</button> <button class="btn" data-action="logout">Esci dall’account</button></div>`}
 function render(){if(!s.me){renderAuth();return}const routesOK=routes();if(!routesOK.includes(s.page))s.page=routesOK[0];const body=({dashboard:dashboard,events:eventsPage,users:usersPage,tables:tablesPage,checkins:checkinPage,exports:exportsPage,profile:profilePage})[s.page]();shell(body)}
-const modal=(title,fields,form)=>{s.modal=`<div class="overlay"><div class="dialog"><div class="flex between"><h2>${title}</h2><button class="btn small" data-action="closeModal">✕</button></div><form id="${form}" novalidate>${fields}<div class="alert" id="formError" role="alert" style="display:none;white-space:pre-wrap"></div><div class="dialog-footer"><button class="btn" type="button" data-action="closeModal">Annulla</button><button class="btn primary" type="button" onclick="return window.LTDirectSave(event)">Salva</button></div></form></div></div>`;render()};
+const modal=(title,fields,form)=>{s.modal=`<div class="overlay"><div class="dialog"><div class="flex between"><h2>${title}</h2><button class="btn small" data-action="closeModal">✕</button></div><form id="${form}" novalidate>${fields}<div class="alert" id="formError" role="alert" style="display:none;white-space:pre-wrap"></div><div class="dialog-footer"><button class="btn" type="button" data-action="closeModal">Annulla</button><button class="btn primary" type="button" data-action="modalSave">Salva</button></div></form></div></div>`;render();
+ const currentForm=document.getElementById(form);
+ const saveButton=currentForm?.querySelector('[data-action="modalSave"]');
+ if(saveButton)saveButton.addEventListener('click',ev=>{
+  ev.preventDefault();ev.stopPropagation();
+  if(saveButton.dataset.busy==='1')return;
+  saveButton.dataset.busy='1';
+  void onForm({target:currentForm,preventDefault:()=>{}}).catch(error=>{
+    showFormError(currentForm,error?.message||'Errore durante il salvataggio');
+  }).finally(()=>{if(saveButton.isConnected)delete saveButton.dataset.busy;});
+ });
+};
 const field=(label,name,value='',type='text',required=false)=>`<div class="field"><label>${label}</label><input name="${name}" type="${type}" value="${esc(value)}" ${required?'required':''}/></div>`;
 const select=(label,name,options,value)=>`<div class="field"><label>${label}</label><select name="${name}">${options.map(([v,t])=>`<option value="${esc(v)}" ${String(v)===String(value)?'selected':''}>${esc(t)}</option>`).join('')}</select></div>`;
-function eventModal(e={}){const today=new Intl.DateTimeFormat('sv-SE',{timeZone:'Europe/Rome',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());const romeTime=x=>new Intl.DateTimeFormat('sv-SE',{timeZone:'Europe/Rome',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).format(new Date(x)).replace(' ','T');const defaultDeadline=e.deadline?romeTime(e.deadline):`${today}T23:30`;
- modal(e.id?'Modifica evento':'Nuovo evento',`<input type="hidden" name="id" value="${esc(e.id||'')}"/>${field('Nome evento','title',e.title||'', 'text',true)}${field('Locale','venue',e.venue||'')}${field('Data evento','event_date',e.event_date||today,'date',true)}${field('Chiusura liste (ora locale del dispositivo)','deadline',defaultDeadline,'datetime-local',true)}${field('Email destinataria PDF','admin_email',e.admin_email||'','email')}${select('Stato','status',[['draft','Bozza'],['open','Liste aperte'],['closed','Liste chiuse']],e.status||'open')}`,'eventForm');}
+function eventModal(e={}){
+ const today=new Intl.DateTimeFormat('sv-SE',{timeZone:'Europe/Rome',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+ const dt=e.deadline?new Intl.DateTimeFormat('sv-SE',{timeZone:'Europe/Rome',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).format(new Date(e.deadline)).replace(' ','T'):today+'T23:30';
+ const parts=dt.split('T');
+ modal(e.id?'Modifica evento':'Nuovo evento',`<input type="hidden" name="id" value="${esc(e.id||'')}"/>${field('Nome evento','title',e.title||'','text',true)}${field('Locale','venue',e.venue||'')}${field('Data evento','event_date',e.event_date||today,'date',true)}${field('Data chiusura liste','deadline_date',parts[0],'date',true)}${field('Ora chiusura liste','deadline_time',parts[1]||'23:30','time',true)}${field('Email destinataria PDF','admin_email',e.admin_email||'','email')}${select('Stato','status',[['draft','Bozza'],['open','Liste aperte'],['closed','Liste chiuse']],e.status||'open')}`,'eventForm');
+}
 function tableModal(t={}){const owners=admin()?s.users.filter(u=>u.role==='capogruppo'&&u.active&&s.assignments.some(a=>a.user_id===u.id&&a.event_id===s.eventId)):[];
  modal(t.id?'Modifica tavolo':'Nuovo tavolo',`<input type="hidden" name="id" value="${esc(t.id||'')}"/>${field('Nome tavolo','table_name',t.table_name||'','text',true)}${field('Referente (REF)','reference_name',t.reference_name||s.me.full_name,'text',true)}${admin()?select('Capogruppo responsabile','leader_id',owners.map(u=>[u.id,u.full_name]),t.leader_id||owners[0]?.id):''}${!t.id?`<div class="field"><label>Invitati (facoltativo, uno per riga)</label><textarea name="names" placeholder="Mario Rossi\nLucia Bianchi\nAndrea Verdi"></textarea></div>`:''}`,'tableForm');}
 function guestModal(tid,g={}){modal(g.id?'Modifica invitato':'Aggiungi invitati',`<input type="hidden" name="table_id" value="${esc(tid)}"/><input type="hidden" name="id" value="${esc(g.id||'')}"/>${g.id?field('Nome','first_name',g.first_name,'text',true)+field('Cognome','last_name',g.last_name,'text',true):`<div class="field"><label>Nomi e cognomi — uno per riga</label><textarea name="names" required placeholder="Mario Rossi\nLucia Bianchi\nAndrea Verdi"></textarea></div>`}`,'guestForm');}
@@ -127,18 +142,39 @@ async function generatePdf(){if(!admin()||!current())return;const allTables=[...
  notice('PDF generato, salvato e scaricato');await refreshEvent();
 }
 async function adminRequest(payload){
- const getSession=supabase.auth.getSession();
- const timeout=(ms,label)=>new Promise((_,reject)=>setTimeout(()=>reject(new Error(label)),ms));
- const {data:{session},error:sessionError}=await Promise.race([getSession,timeout(12000,'Autenticazione bloccata. Esci, rientra e riprova.')]);
- if(sessionError||!session?.access_token)throw new Error('La sessione è scaduta. Esci e accedi nuovamente.');
- const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),20000);
- let response;
- try{response=await fetch(`${URL}/functions/v1/manage-users`,{method:'POST',headers:{'content-type':'application/json',apikey:KEY,authorization:`Bearer ${session.access_token}`},body:JSON.stringify(payload),signal:controller.signal});}
- catch(e){throw new Error(e?.name==='AbortError'?'Il server non ha risposto entro 20 secondi. Riprova.':'Impossibile contattare il server. Controlla la connessione e riprova.');}
- finally{clearTimeout(timer)}
- const result=await response.json().catch(()=>({}));
- if(!response.ok||!result.ok)throw new Error(result.error||`Errore salvataggio (HTTP ${response.status})`);
- return result;
+ // The current token was already obtained during login. Avoid waiting for another
+ // getSession lock from inside a Save click (which previously produced no API call).
+ let token=s.session?.access_token;
+ if(!token)throw new Error('Sessione amministratore non disponibile. Esci e accedi nuovamente.');
+ const deadline=new AbortController();
+ const timer=setTimeout(()=>deadline.abort(),18000);
+ try{
+  let response=await fetch(`${URL}/functions/v1/manage-users`,{
+   method:'POST',signal:deadline.signal,
+   headers:{'content-type':'application/json',apikey:KEY,authorization:`Bearer ${token}`},
+   body:JSON.stringify(payload)
+  });
+  let result=await response.json().catch(()=>({}));
+  if(response.status===401){
+   const refreshed=await Promise.race([
+     supabase.auth.refreshSession(),
+     new Promise((_,reject)=>setTimeout(()=>reject(new Error('Sessione scaduta: rieffettua l’accesso.')),8000))
+   ]);
+   if(refreshed.error||!refreshed.data?.session)throw new Error('Sessione scaduta: rieffettua l’accesso.');
+   s.session=refreshed.data.session;token=s.session.access_token;
+   response=await fetch(`${URL}/functions/v1/manage-users`,{
+    method:'POST',signal:deadline.signal,
+    headers:{'content-type':'application/json',apikey:KEY,authorization:`Bearer ${token}`},
+    body:JSON.stringify(payload)
+   });
+   result=await response.json().catch(()=>({}));
+  }
+  if(!response.ok||!result.ok)throw new Error(result.error||`Richiesta rifiutata (HTTP ${response.status})`);
+  return result;
+ }catch(e){
+  if(e?.name==='AbortError')throw new Error('Il server non ha risposto. Controlla la rete e riprova.');
+  throw e;
+ }finally{clearTimeout(timer)}
 }
 function showFormError(form,message,control){
  const banner=form.querySelector('#formError');
@@ -187,7 +223,33 @@ async function onForm(ev){const form=ev.target;if(!form.id)return;ev.preventDefa
    s.modal=null;notice('Password salvata. Ora puoi accedere con email e nuova password.');
    render();
  }
- if(action==='eventForm'){const enteredDate=new Date(obj.deadline);if(!Number.isFinite(enteredDate.getTime()))throw new Error('Inserisci un orario di chiusura valido.');const payload={title:obj.title.trim(),venue:obj.venue||'',event_date:obj.event_date,deadline:enteredDate.toISOString(),admin_email:obj.admin_email||null,status:obj.status};const saved=await adminRequest({action:'save_event',id:obj.id||null,event:payload});s.eventId=saved.id;s.modal=null;notice('Evento salvato correttamente');await refreshAll();}
+ if(action==='eventForm'){
+  if(!admin())throw new Error('Solo un amministratore può salvare eventi.');
+  const startDate=String(obj.deadline_date||'');
+  const startTime=String(obj.deadline_time||'');
+  if(!/^\\d{4}-\\d{2}-\\d{2}$/.test(startDate)||!/^\\d{2}:\\d{2}$/.test(startTime))throw new Error('Inserisci data e ora di chiusura valide.');
+  const enteredDate=new Date(startDate+'T'+startTime+':00');
+  if(!Number.isFinite(enteredDate.getTime()))throw new Error('Inserisci una data di chiusura valida.');
+  const payload={
+   title:String(obj.title||'').trim(),venue:String(obj.venue||'').trim(),
+   event_date:obj.event_date,deadline:enteredDate.toISOString(),
+   admin_email:obj.admin_email?.trim()||null,status:obj.status
+  };
+  if(!payload.title)throw new Error('Inserisci il nome dell’evento.');
+  // The RLS policy already authorizes admins. Write directly to PostgreSQL via
+  // Supabase Data API, eliminating the extra Edge Function and getSession hop.
+  const operation=obj.id
+    ?supabase.from('events').update(payload).eq('id',obj.id)
+    :supabase.from('events').insert(payload);
+  const saved=check(await Promise.race([
+   operation.select('id').single(),
+   new Promise((_,reject)=>setTimeout(()=>reject(new Error('Il salvataggio impiega troppo tempo. Controlla la connessione.')),18000))
+  ]));
+  if(!saved?.id)throw new Error('Il server non ha confermato il salvataggio.');
+  s.eventId=saved.id;s.modal=null;render();
+  notice('Evento salvato correttamente');
+  await refreshAll();
+ }
  if(action==='tableForm'){const payload={table_name:obj.table_name.trim(),reference_name:obj.reference_name.trim()};let id=obj.id;if(id){if(admin())payload.leader_id=obj.leader_id;check(await supabase.from('event_tables').update(payload).eq('id',id))}else{const leader=admin()?obj.leader_id:s.me.id;if(!leader)throw Error('Assegna un capogruppo all’evento prima di creare il tavolo');const row=check(await supabase.from('event_tables').insert({...payload,event_id:s.eventId,leader_id:leader}).select('id').single());id=row.id;await saveNames(id,parseNames(obj.names||''))}s.modal=null;notice('Tavolo salvato');await refreshEvent();}
  if(action==='guestForm'){if(obj.id){check(await supabase.from('guest_entries').update({first_name:obj.first_name.trim(),last_name:obj.last_name.trim()}).eq('id',obj.id))}else{const names=parseNames(obj.names||'');if(!names.length)throw Error('Inserisci almeno un nome e cognome');await saveNames(obj.table_id,names)}s.modal=null;notice('Invitati salvati');s.expanded.add(obj.table_id);await refreshEvent();}
  if(action==='userForm'){
@@ -198,21 +260,9 @@ async function onForm(ev){const form=ev.target;if(!form.id)return;ev.preventDefa
  }
  }catch(e){const message=e?.message||'Errore durante il salvataggio';showFormError(form,message)}finally{if(b){b.disabled=false;b.textContent=originalLabel;}}
 }
-// Direct handler, independent from delegated click events. Used by every modal Save button.
-window.LTDirectSave=function(ev){
- ev.preventDefault(); ev.stopPropagation();
- const b=ev.currentTarget;
- const form=b?.closest('form');
- if(!form){notice('Impossibile individuare il modulo. Ricarica la pagina.',true);return false;}
- if(b.dataset.busy==='1')return false;
- b.dataset.busy='1';
- void onForm({target:form,preventDefault:()=>{}}).catch(err=>{
-   showFormError(form,err?.message||'Errore durante il salvataggio');
- }).finally(()=>{if(b.isConnected)delete b.dataset.busy;});
- return false;
-};
 async function onClick(ev){const btn=ev.target.closest('[data-action]');if(!btn)return;const a=btn.dataset.action,id=btn.dataset.id;
  try{
+ if(a==='modalSave'){const form=btn.closest('form');if(!form)throw Error('Modulo non trovato');await onForm({target:form,preventDefault:()=>{}});return}
  if(a==='page'){s.page=btn.dataset.page;render();return}
  if(a==='logout'){clearPoll();await supabase.auth.signOut();return}
  if(a==='closeModal'){s.modal=null;render();return}
