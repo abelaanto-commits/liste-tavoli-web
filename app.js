@@ -66,7 +66,7 @@ function renderAuth(){
 }
 function shell(body){
  const e=current();const name=s.me.full_name||s.session?.user?.email;
- root.innerHTML=`<div class="app-shell"><aside class="side"><div class="brand"><div class="logo">LT</div> Liste Tavoli</div><nav class="nav">${routes().map(r=>`<button data-action="page" data-page="${r}" class="${s.page===r?'active':''}"><span>${icon[r]}</span> ${label[r]}</button>`).join('')}</nav><div class="sidefoot">${esc(name)}<br><span class="muted">${admin()?'Amministratore':staff()?'Addetto liste':'Capogruppo'}</span><br><button data-action="logout" class="btn small" style="margin-top:9px">Esci</button></div></aside><main class="content"><div class="topbar"><div class="heading"><h1>${label[s.page]}</h1><p>${e?esc(e.title)+' · '+dtime(e.event_date+'T12:00:00'): 'Gestionale eventi privato'}</p></div><select id="eventSelect" class="event-select" aria-label="Seleziona evento">${s.events.length?s.events.map(e=>`<option value="${e.id}" ${e.id===s.eventId?'selected':''}>${esc(e.title)} · ${esc(e.event_date)}</option>`).join(''):'<option value="">Nessun evento</option>'}</select></div>${body}<div class="footer-info">Liste Tavoli · Dati protetti da Supabase · Accesso riservato · Versione 1.5</div></main></div>${s.modal||''}`;
+ root.innerHTML=`<div class="app-shell"><aside class="side"><div class="brand"><div class="logo">LT</div> Liste Tavoli</div><nav class="nav">${routes().map(r=>`<button data-action="page" data-page="${r}" class="${s.page===r?'active':''}"><span>${icon[r]}</span> ${label[r]}</button>`).join('')}</nav><div class="sidefoot">${esc(name)}<br><span class="muted">${admin()?'Amministratore':staff()?'Addetto liste':'Capogruppo'}</span><br><button data-action="logout" class="btn small" style="margin-top:9px">Esci</button></div></aside><main class="content"><div class="topbar"><div class="heading"><h1>${label[s.page]}</h1><p>${e?esc(e.title)+' · '+dtime(e.event_date+'T12:00:00'): 'Gestionale eventi privato'}</p></div><select id="eventSelect" class="event-select" aria-label="Seleziona evento">${s.events.length?s.events.map(e=>`<option value="${e.id}" ${e.id===s.eventId?'selected':''}>${esc(e.title)} · ${esc(e.event_date)}</option>`).join(''):'<option value="">Nessun evento</option>'}</select></div>${body}<div class="footer-info">Liste Tavoli · Dati protetti da Supabase · Accesso riservato · Versione 1.6</div></main></div>${s.modal||''}`;
 }
 function dashboard(){const e=current(),ts=eventTables(),count=s.guests.length,st=s.me.role;
  if(!e)return `<div class="card placeholder">${admin()?'Crea il primo evento nella sezione Eventi.':'Non sei ancora assegnato a un evento. Contatta l’amministratore.'}</div>`;
@@ -101,7 +101,7 @@ function checkinPage(){const e=current();if(!e)return '<div class="card placehol
 function exportsPage(){if(!admin())return '';return `<div class="card"><div class="card-header"><h2>PDF della serata</h2><button class="btn primary" data-action="generatePdf" ${current()?'':'disabled'}>Genera e salva PDF</button></div><div class="notice">Il PDF ordina automaticamente tavoli per nome e invitati per nome, poi cognome, nel formato A4 a tre colonne. Il download è immediato. L’invio automatico per email non è ancora configurato.</div><div class="stack">${s.exports.map(x=>`<div class="flex between"><span><strong>Versione ${x.version}</strong> · ${dtime(x.created_at)}</span><button class="btn small" data-action="openPdf" data-path="${esc(x.file_path)}">Apri PDF</button></div>`).join('')||'<p class="muted small">Nessun PDF salvato per questo evento.</p>'}</div></div>`;}
 function profilePage(){return `<div class="card"><h2>Il mio account</h2><p><strong>${esc(s.me.full_name)}</strong></p><p class="small muted">${esc(s.session.user.email||'')}</p><p>Ruolo: <span class="badge">${admin()?'Amministratore':staff()?'Addetto liste':'Capogruppo'}</span></p><button class="btn primary" data-action="changePassword">Cambia o imposta password</button> <button class="btn" data-action="logout">Esci dall’account</button></div>`}
 function render(){if(!s.me){renderAuth();return}const routesOK=routes();if(!routesOK.includes(s.page))s.page=routesOK[0];const body=({dashboard:dashboard,events:eventsPage,users:usersPage,tables:tablesPage,checkins:checkinPage,exports:exportsPage,profile:profilePage})[s.page]();shell(body)}
-const modal=(title,fields,form)=>{s.modal=`<div class="overlay"><div class="dialog"><div class="flex between"><h2>${title}</h2><button class="btn small" data-action="closeModal">✕</button></div><form id="${form}" novalidate>${fields}<div class="alert" id="formError" role="alert" style="display:none;white-space:pre-wrap"></div><div class="dialog-footer"><button class="btn" type="button" data-action="closeModal">Annulla</button><button class="btn primary" type="button" data-action="modalSave">Salva</button></div></form></div></div>`;render()};
+const modal=(title,fields,form)=>{s.modal=`<div class="overlay"><div class="dialog"><div class="flex between"><h2>${title}</h2><button class="btn small" data-action="closeModal">✕</button></div><form id="${form}" novalidate>${fields}<div class="alert" id="formError" role="alert" style="display:none;white-space:pre-wrap"></div><div class="dialog-footer"><button class="btn" type="button" data-action="closeModal">Annulla</button><button class="btn primary" type="button" onclick="return window.LTDirectSave(event)">Salva</button></div></form></div></div>`;render()};
 const field=(label,name,value='',type='text',required=false)=>`<div class="field"><label>${label}</label><input name="${name}" type="${type}" value="${esc(value)}" ${required?'required':''}/></div>`;
 const select=(label,name,options,value)=>`<div class="field"><label>${label}</label><select name="${name}">${options.map(([v,t])=>`<option value="${esc(v)}" ${String(v)===String(value)?'selected':''}>${esc(t)}</option>`).join('')}</select></div>`;
 function eventModal(e={}){const today=new Intl.DateTimeFormat('sv-SE',{timeZone:'Europe/Rome',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());const romeTime=x=>new Intl.DateTimeFormat('sv-SE',{timeZone:'Europe/Rome',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).format(new Date(x)).replace(' ','T');const defaultDeadline=e.deadline?romeTime(e.deadline):`${today}T23:30`;
@@ -198,9 +198,21 @@ async function onForm(ev){const form=ev.target;if(!form.id)return;ev.preventDefa
  }
  }catch(e){const message=e?.message||'Errore durante il salvataggio';showFormError(form,message)}finally{if(b){b.disabled=false;b.textContent=originalLabel;}}
 }
+// Direct handler, independent from delegated click events. Used by every modal Save button.
+window.LTDirectSave=function(ev){
+ ev.preventDefault(); ev.stopPropagation();
+ const b=ev.currentTarget;
+ const form=b?.closest('form');
+ if(!form){notice('Impossibile individuare il modulo. Ricarica la pagina.',true);return false;}
+ if(b.dataset.busy==='1')return false;
+ b.dataset.busy='1';
+ void onForm({target:form,preventDefault:()=>{}}).catch(err=>{
+   showFormError(form,err?.message||'Errore durante il salvataggio');
+ }).finally(()=>{if(b.isConnected)delete b.dataset.busy;});
+ return false;
+};
 async function onClick(ev){const btn=ev.target.closest('[data-action]');if(!btn)return;const a=btn.dataset.action,id=btn.dataset.id;
  try{
- if(a==='modalSave'){const form=btn.closest('form');if(!form)throw Error('Modulo di salvataggio non trovato');await onForm({target:form,preventDefault:()=>{}});return}
  if(a==='page'){s.page=btn.dataset.page;render();return}
  if(a==='logout'){clearPoll();await supabase.auth.signOut();return}
  if(a==='closeModal'){s.modal=null;render();return}
