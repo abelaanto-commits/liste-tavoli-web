@@ -100,7 +100,7 @@ function checkinPage(){const e=current();if(!e)return '<div class="card placehol
 function exportsPage(){if(!admin())return '';return `<div class="card"><div class="card-header"><h2>PDF della serata</h2><button class="btn primary" data-action="generatePdf" ${current()?'':'disabled'}>Genera e salva PDF</button></div><div class="notice">Il PDF ordina automaticamente tavoli per nome e invitati per nome, poi cognome, nel formato A4 a tre colonne. Il download è immediato. L’invio automatico per email non è ancora configurato.</div><div class="stack">${s.exports.map(x=>`<div class="flex between"><span><strong>Versione ${x.version}</strong> · ${dtime(x.created_at)}</span><button class="btn small" data-action="openPdf" data-path="${esc(x.file_path)}">Apri PDF</button></div>`).join('')||'<p class="muted small">Nessun PDF salvato per questo evento.</p>'}</div></div>`;}
 function profilePage(){return `<div class="card"><h2>Il mio account</h2><p><strong>${esc(s.me.full_name)}</strong></p><p class="small muted">${esc(s.session.user.email||'')}</p><p>Ruolo: <span class="badge">${admin()?'Amministratore':staff()?'Addetto liste':'Capogruppo'}</span></p><button class="btn" data-action="logout">Esci dall’account</button></div>`}
 function render(){if(!s.me){renderAuth();return}const routesOK=routes();if(!routesOK.includes(s.page))s.page=routesOK[0];const body=({dashboard:dashboard,events:eventsPage,users:usersPage,tables:tablesPage,checkins:checkinPage,exports:exportsPage,profile:profilePage})[s.page]();shell(body)}
-const modal=(title,fields,form)=>{s.modal=`<div class="overlay"><div class="dialog"><div class="flex between"><h2>${title}</h2><button class="btn small" data-action="closeModal">✕</button></div><form id="${form}"><div class="alert" id="formError" role="alert" style="display:none;white-space:pre-wrap"></div>${fields}<div class="dialog-footer"><button class="btn" type="button" data-action="closeModal">Annulla</button><button class="btn primary" type="submit">Salva</button></div></form></div></div>`;render()};
+const modal=(title,fields,form)=>{s.modal=`<div class="overlay"><div class="dialog"><div class="flex between"><h2>${title}</h2><button class="btn small" data-action="closeModal">✕</button></div><form id="${form}" novalidate>${fields}<div class="alert" id="formError" role="alert" style="display:none;white-space:pre-wrap"></div><div class="dialog-footer"><button class="btn" type="button" data-action="closeModal">Annulla</button><button class="btn primary" type="submit">Salva</button></div></form></div></div>`;render()};
 const field=(label,name,value='',type='text',required=false)=>`<div class="field"><label>${label}</label><input name="${name}" type="${type}" value="${esc(value)}" ${required?'required':''}/></div>`;
 const select=(label,name,options,value)=>`<div class="field"><label>${label}</label><select name="${name}">${options.map(([v,t])=>`<option value="${esc(v)}" ${String(v)===String(value)?'selected':''}>${esc(t)}</option>`).join('')}</select></div>`;
 function eventModal(e={}){const today=new Intl.DateTimeFormat('sv-SE',{timeZone:'Europe/Rome',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());const romeTime=x=>new Intl.DateTimeFormat('sv-SE',{timeZone:'Europe/Rome',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).format(new Date(x)).replace(' ','T');const defaultDeadline=e.deadline?romeTime(e.deadline):`${today}T23:30`;
@@ -134,7 +134,36 @@ async function adminRequest(payload){
  if(!response.ok||!result.ok)throw new Error(result.error||`Errore salvataggio (HTTP ${response.status})`);
  return result;
 }
-async function onForm(ev){const form=ev.target;if(!form.id)return;ev.preventDefault();const b=form.querySelector('[type=submit]');const originalLabel=b?.textContent;if(b){b.disabled=true;b.textContent='Salvataggio...';}const formError=form.querySelector('#formError');if(formError){formError.style.display='none';formError.textContent='';}
+function showFormError(form,message,control){
+ const banner=form.querySelector('#formError');
+ if(banner){banner.textContent='Salvataggio non riuscito: '+message;banner.style.display='block';banner.scrollIntoView({block:'nearest'});}
+ notice(message,true);
+ if(control)control.focus({preventScroll:true});
+}
+async function onForm(ev){const form=ev.target;if(!form.id)return;ev.preventDefault();
+ const b=form.querySelector('[type=submit]');const originalLabel=b?.textContent;
+ const formError=form.querySelector('#formError');
+ if(formError){formError.style.display='none';formError.textContent='';}
+ const invalid=[...form.elements].find(c=>c.willValidate&&!c.checkValidity());
+ if(invalid){
+   const lbl=invalid.closest('.field')?.querySelector('label')?.textContent||invalid.name||'Campo obbligatorio';
+   const why=invalid.validity.valueMissing?'è obbligatorio':invalid.validity.typeMismatch?'non è valido':invalid.validity.rangeUnderflow?'è troppo breve':'contiene un valore non valido';
+   showFormError(form,\`${lbl}: ${why}.\`,invalid);
+   return;
+ }
+ if(form.id==='userForm'){
+   const pw=form.elements.namedItem('password')?.value||'';
+   const creating=!form.elements.namedItem('id')?.value;
+   if((creating||pw)&&pw.length<10){
+     showFormError(form,'La password del capogruppo/addetto deve contenere almeno 10 caratteri.',form.elements.namedItem('password'));
+     return;
+   }
+ }
+ if(form.id==='setupForm'){
+   const pw=form.elements.namedItem('password')?.value||'';
+   if(pw.length<12){showFormError(form,'La password amministratore deve contenere almeno 12 caratteri.',form.elements.namedItem('password'));return;}
+ }
+ if(b){b.disabled=true;b.textContent='Salvataggio...';}
  try{const fd=new FormData(form),obj=Object.fromEntries(fd.entries());let action=form.id;
  if(action==='loginform'){const {error}=await supabase.auth.signInWithPassword({email:obj.email,password:obj.password});if(error)throw error;return}
  if(action==='setupForm'){
@@ -149,7 +178,7 @@ async function onForm(ev){const form=ev.target;if(!form.id)return;ev.preventDefa
   const uid=obj.id||result.id;const assigned=fd.getAll('assigned');const existing=s.assignments.filter(a=>a.user_id===uid);for(const a of existing.filter(a=>!assigned.includes(a.event_id)))check(await supabase.from('event_assignments').delete().eq('event_id',a.event_id).eq('user_id',uid));for(const eid of assigned.filter(eid=>!existing.some(a=>a.event_id===eid)))check(await supabase.from('event_assignments').insert({event_id:eid,user_id:uid}));
   s.modal=null;notice(obj.id?'Account aggiornato':'Capogruppo o addetto creato correttamente');await refreshAll();
  }
- }catch(e){const message=e?.message||'Errore durante il salvataggio';if(formError){formError.textContent='Salvataggio non riuscito: '+message;formError.style.display='block';}notice(message,true)}finally{if(b){b.disabled=false;b.textContent=originalLabel;}}
+ }catch(e){const message=e?.message||'Errore durante il salvataggio';showFormError(form,message)}finally{if(b){b.disabled=false;b.textContent=originalLabel;}}
 }
 async function onClick(ev){const btn=ev.target.closest('[data-action]');if(!btn)return;const a=btn.dataset.action,id=btn.dataset.id;
  try{
