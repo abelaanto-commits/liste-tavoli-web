@@ -26,7 +26,7 @@ function clearPoll(){if(s.poll){clearInterval(s.poll);s.poll=null;}if(s.channel)
 async function start(){try{
  const {data:{session}}=await supabase.auth.getSession();s.session=session;
  if(session)await signedIn();else renderAuth();
- supabase.auth.onAuthStateChange((evt,session)=>{setTimeout(async()=>{if(evt==='SIGNED_OUT'){clearPoll();s.session=null;s.me=null;renderAuth()} else if(evt==='SIGNED_IN'&&!s.me){s.session=session;await signedIn()}},0)});
+ supabase.auth.onAuthStateChange((evt,session)=>{if(session)s.session=session;setTimeout(async()=>{if(evt==='SIGNED_OUT'){clearPoll();s.session=null;s.me=null;renderAuth()} else if(evt==='SIGNED_IN'&&!s.me){s.session=session;await signedIn()}},0)});
 }catch(e){root.innerHTML=`<div class="auth-wrap"><div class="card">Impossibile caricare il gestionale. ${esc(e.message)}</div></div>`}}
 async function signedIn(){
  try{const {data,error}=await supabase.from('profiles').select('*').eq('id',s.session.user.id).single();if(error||!data||!data.active){await supabase.auth.signOut();throw new Error('Account non abilitato. Contatta l’amministratore.')}s.me=data;s.modal=null;s.page=staff()?'checkins':'dashboard';await refreshAll();}catch(e){notice(e.message,true);renderAuth()}
@@ -65,7 +65,7 @@ function renderAuth(){
 }
 function shell(body){
  const e=current();const name=s.me.full_name||s.session?.user?.email;
- root.innerHTML=`<div class="app-shell"><aside class="side"><div class="brand"><div class="logo">LT</div> Liste Tavoli</div><nav class="nav">${routes().map(r=>`<button data-action="page" data-page="${r}" class="${s.page===r?'active':''}"><span>${icon[r]}</span> ${label[r]}</button>`).join('')}</nav><div class="sidefoot">${esc(name)}<br><span class="muted">${admin()?'Amministratore':staff()?'Addetto liste':'Capogruppo'}</span><br><button data-action="logout" class="btn small" style="margin-top:9px">Esci</button></div></aside><main class="content"><div class="topbar"><div class="heading"><h1>${label[s.page]}</h1><p>${e?esc(e.title)+' · '+dtime(e.event_date+'T12:00:00'): 'Gestionale eventi privato'}</p></div><select id="eventSelect" class="event-select" aria-label="Seleziona evento">${s.events.length?s.events.map(e=>`<option value="${e.id}" ${e.id===s.eventId?'selected':''}>${esc(e.title)} · ${esc(e.event_date)}</option>`).join(''):'<option value="">Nessun evento</option>'}</select></div>${body}<div class="footer-info">Liste Tavoli · Dati protetti da Supabase · Accesso riservato</div></main></div>${s.modal||''}`;
+ root.innerHTML=`<div class="app-shell"><aside class="side"><div class="brand"><div class="logo">LT</div> Liste Tavoli</div><nav class="nav">${routes().map(r=>`<button data-action="page" data-page="${r}" class="${s.page===r?'active':''}"><span>${icon[r]}</span> ${label[r]}</button>`).join('')}</nav><div class="sidefoot">${esc(name)}<br><span class="muted">${admin()?'Amministratore':staff()?'Addetto liste':'Capogruppo'}</span><br><button data-action="logout" class="btn small" style="margin-top:9px">Esci</button></div></aside><main class="content"><div class="topbar"><div class="heading"><h1>${label[s.page]}</h1><p>${e?esc(e.title)+' · '+dtime(e.event_date+'T12:00:00'): 'Gestionale eventi privato'}</p></div><select id="eventSelect" class="event-select" aria-label="Seleziona evento">${s.events.length?s.events.map(e=>`<option value="${e.id}" ${e.id===s.eventId?'selected':''}>${esc(e.title)} · ${esc(e.event_date)}</option>`).join(''):'<option value="">Nessun evento</option>'}</select></div>${body}<div class="footer-info">Liste Tavoli · Dati protetti da Supabase · Accesso riservato · Versione 1.4</div></main></div>${s.modal||''}`;
 }
 function dashboard(){const e=current(),ts=eventTables(),count=s.guests.length,st=s.me.role;
  if(!e)return `<div class="card placeholder">${admin()?'Crea il primo evento nella sezione Eventi.':'Non sei ancora assegnato a un evento. Contatta l’amministratore.'}</div>`;
@@ -100,7 +100,7 @@ function checkinPage(){const e=current();if(!e)return '<div class="card placehol
 function exportsPage(){if(!admin())return '';return `<div class="card"><div class="card-header"><h2>PDF della serata</h2><button class="btn primary" data-action="generatePdf" ${current()?'':'disabled'}>Genera e salva PDF</button></div><div class="notice">Il PDF ordina automaticamente tavoli per nome e invitati per nome, poi cognome, nel formato A4 a tre colonne. Il download è immediato. L’invio automatico per email non è ancora configurato.</div><div class="stack">${s.exports.map(x=>`<div class="flex between"><span><strong>Versione ${x.version}</strong> · ${dtime(x.created_at)}</span><button class="btn small" data-action="openPdf" data-path="${esc(x.file_path)}">Apri PDF</button></div>`).join('')||'<p class="muted small">Nessun PDF salvato per questo evento.</p>'}</div></div>`;}
 function profilePage(){return `<div class="card"><h2>Il mio account</h2><p><strong>${esc(s.me.full_name)}</strong></p><p class="small muted">${esc(s.session.user.email||'')}</p><p>Ruolo: <span class="badge">${admin()?'Amministratore':staff()?'Addetto liste':'Capogruppo'}</span></p><button class="btn" data-action="logout">Esci dall’account</button></div>`}
 function render(){if(!s.me){renderAuth();return}const routesOK=routes();if(!routesOK.includes(s.page))s.page=routesOK[0];const body=({dashboard:dashboard,events:eventsPage,users:usersPage,tables:tablesPage,checkins:checkinPage,exports:exportsPage,profile:profilePage})[s.page]();shell(body)}
-const modal=(title,fields,form)=>{s.modal=`<div class="overlay"><div class="dialog"><div class="flex between"><h2>${title}</h2><button class="btn small" data-action="closeModal">✕</button></div><form id="${form}" novalidate>${fields}<div class="alert" id="formError" role="alert" style="display:none;white-space:pre-wrap"></div><div class="dialog-footer"><button class="btn" type="button" data-action="closeModal">Annulla</button><button class="btn primary" type="submit">Salva</button></div></form></div></div>`;render()};
+const modal=(title,fields,form)=>{s.modal=`<div class="overlay"><div class="dialog"><div class="flex between"><h2>${title}</h2><button class="btn small" data-action="closeModal">✕</button></div><form id="${form}" novalidate>${fields}<div class="alert" id="formError" role="alert" style="display:none;white-space:pre-wrap"></div><div class="dialog-footer"><button class="btn" type="button" data-action="closeModal">Annulla</button><button class="btn primary" type="button" data-action="modalSave">Salva</button></div></form></div></div>`;render()};
 const field=(label,name,value='',type='text',required=false)=>`<div class="field"><label>${label}</label><input name="${name}" type="${type}" value="${esc(value)}" ${required?'required':''}/></div>`;
 const select=(label,name,options,value)=>`<div class="field"><label>${label}</label><select name="${name}">${options.map(([v,t])=>`<option value="${esc(v)}" ${String(v)===String(value)?'selected':''}>${esc(t)}</option>`).join('')}</select></div>`;
 function eventModal(e={}){const today=new Intl.DateTimeFormat('sv-SE',{timeZone:'Europe/Rome',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());const romeTime=x=>new Intl.DateTimeFormat('sv-SE',{timeZone:'Europe/Rome',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).format(new Date(x)).replace(' ','T');const defaultDeadline=e.deadline?romeTime(e.deadline):`${today}T23:30`;
@@ -125,11 +125,15 @@ async function generatePdf(){if(!admin()||!current())return;const allTables=[...
  notice('PDF generato, salvato e scaricato');await refreshEvent();
 }
 async function adminRequest(payload){
- const {data:{session},error:sessionError}=await supabase.auth.getSession();
+ const getSession=supabase.auth.getSession();
+ const timeout=(ms,label)=>new Promise((_,reject)=>setTimeout(()=>reject(new Error(label)),ms));
+ const {data:{session},error:sessionError}=await Promise.race([getSession,timeout(12000,'Autenticazione bloccata. Esci, rientra e riprova.')]);
  if(sessionError||!session?.access_token)throw new Error('La sessione è scaduta. Esci e accedi nuovamente.');
+ const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),20000);
  let response;
- try{response=await fetch(`${URL}/functions/v1/manage-users`,{method:'POST',headers:{'content-type':'application/json',apikey:KEY,authorization:`Bearer ${session.access_token}`},body:JSON.stringify(payload)});}
- catch(e){throw new Error('Impossibile contattare il server. Controlla la connessione e riprova.');}
+ try{response=await fetch(`${URL}/functions/v1/manage-users`,{method:'POST',headers:{'content-type':'application/json',apikey:KEY,authorization:`Bearer ${session.access_token}`},body:JSON.stringify(payload),signal:controller.signal});}
+ catch(e){throw new Error(e?.name==='AbortError'?'Il server non ha risposto entro 20 secondi. Riprova.':'Impossibile contattare il server. Controlla la connessione e riprova.');}
+ finally{clearTimeout(timer)}
  const result=await response.json().catch(()=>({}));
  if(!response.ok||!result.ok)throw new Error(result.error||`Errore salvataggio (HTTP ${response.status})`);
  return result;
@@ -141,14 +145,16 @@ function showFormError(form,message,control){
  if(control)control.focus({preventScroll:true});
 }
 async function onForm(ev){const form=ev.target;if(!form.id)return;ev.preventDefault();
- const b=form.querySelector('[type=submit]');const originalLabel=b?.textContent;
+ const b=form.querySelector('[data-action=modalSave]')||form.querySelector('[type=submit]');const originalLabel=b?.textContent;
  const formError=form.querySelector('#formError');
  if(formError){formError.style.display='none';formError.textContent='';}
+ if(b){b.disabled=true;b.textContent='Verifica dati...';}
  const invalid=[...form.elements].find(c=>c.willValidate&&!c.checkValidity());
  if(invalid){
    const lbl=invalid.closest('.field')?.querySelector('label')?.textContent||invalid.name||'Campo obbligatorio';
    const why=invalid.validity.valueMissing?'è obbligatorio':invalid.validity.typeMismatch?'non è valido':invalid.validity.rangeUnderflow?'è troppo breve':'contiene un valore non valido';
    showFormError(form,lbl+': '+why+'.',invalid);
+   if(b){b.disabled=false;b.textContent=originalLabel;}
    return;
  }
  if(form.id==='userForm'){
@@ -156,12 +162,13 @@ async function onForm(ev){const form=ev.target;if(!form.id)return;ev.preventDefa
    const creating=!form.elements.namedItem('id')?.value;
    if((creating||pw)&&pw.length<10){
      showFormError(form,'La password del capogruppo/addetto deve contenere almeno 10 caratteri.',form.elements.namedItem('password'));
+     if(b){b.disabled=false;b.textContent=originalLabel;}
      return;
    }
  }
  if(form.id==='setupForm'){
    const pw=form.elements.namedItem('password')?.value||'';
-   if(pw.length<12){showFormError(form,'La password amministratore deve contenere almeno 12 caratteri.',form.elements.namedItem('password'));return;}
+   if(pw.length<12){showFormError(form,'La password amministratore deve contenere almeno 12 caratteri.',form.elements.namedItem('password'));if(b){b.disabled=false;b.textContent=originalLabel;}return;}
  }
  if(b){b.disabled=true;b.textContent='Salvataggio...';}
  try{const fd=new FormData(form),obj=Object.fromEntries(fd.entries());let action=form.id;
@@ -182,6 +189,7 @@ async function onForm(ev){const form=ev.target;if(!form.id)return;ev.preventDefa
 }
 async function onClick(ev){const btn=ev.target.closest('[data-action]');if(!btn)return;const a=btn.dataset.action,id=btn.dataset.id;
  try{
+ if(a==='modalSave'){const form=btn.closest('form');if(!form)throw Error('Modulo di salvataggio non trovato');await onForm({target:form,preventDefault:()=>{}});return}
  if(a==='page'){s.page=btn.dataset.page;render();return}
  if(a==='logout'){clearPoll();await supabase.auth.signOut();return}
  if(a==='closeModal'){s.modal=null;render();return}
