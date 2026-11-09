@@ -4,7 +4,7 @@ const URL='https://cyjuwuipfazjtkvaibpx.supabase.co';
 const KEY='sb_publishable_EJdMDREvMl5kDbMoUjW2Iw_axkQ-h6G';
 const supabase=createClient(URL,KEY,{auth:{autoRefreshToken:true,persistSession:true}});
 const root=document.getElementById('app'),toastEl=document.getElementById('toast');
-const isInviteLanding=/(?:[?#&]type=(invite|recovery))/.test(window.location.href);
+const isInviteLanding=/(?:[?#&]type=(invite|recovery|signup|magiclink))/.test(window.location.href);
 const s={session:null,me:null,events:[],users:[],assignments:[],tables:[],guests:[],attendance:[],exports:[],eventId:null,page:'dashboard',search:'',tableSearch:'',filterOwner:'all',modal:null,expanded:new Set(),channel:null,poll:null};
 const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const norm=x=>String(x??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('it').replace(/\s+/g,' ').trim();
