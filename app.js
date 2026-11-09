@@ -148,7 +148,7 @@ async function onForm(ev){const form=ev.target;if(!form.id)return;ev.preventDefa
  if(invalid){
    const lbl=invalid.closest('.field')?.querySelector('label')?.textContent||invalid.name||'Campo obbligatorio';
    const why=invalid.validity.valueMissing?'è obbligatorio':invalid.validity.typeMismatch?'non è valido':invalid.validity.rangeUnderflow?'è troppo breve':'contiene un valore non valido';
-   showFormError(form,\`${lbl}: ${why}.\`,invalid);
+   showFormError(form,lbl+': '+why+'.',invalid);
    return;
  }
  if(form.id==='userForm'){
