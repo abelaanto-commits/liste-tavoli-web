@@ -258,3 +258,25 @@ body[data-portal="legacy"] .footer-info{margin-top:50px;padding-top:14px;border-
  body[data-portal="legacy"] .guest-row{gap:11px!important}
 }
 @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
+
+/* Compact copy-first layout after removing decorative headings. */
+body[data-portal="admin"] .page-hero,
+body[data-portal="leader"] .page-hero{padding:11px 0 20px!important;margin-bottom:0!important}
+body[data-portal="admin"] .page-hero h1,
+body[data-portal="leader"] .page-hero h1{font-size:clamp(28px,3vw,42px)!important;letter-spacing:-1.05px!important;margin:0!important}
+body[data-portal="admin"] .gp-stat,
+body[data-portal="leader"] .gp-stat{min-height:99px!important;padding:15px 19px!important}
+body[data-portal="admin"] .gp-stat-value,
+body[data-portal="leader"] .gp-stat-value{margin:8px 0 0!important}
+body[data-portal="admin"] .panel-heading,
+body[data-portal="leader"] .panel-heading{margin-bottom:17px!important}
+body[data-portal="admin"] .panel-heading h2,
+body[data-portal="leader"] .panel-heading h2{margin-bottom:0!important}
+@media(max-width:590px){
+ body[data-portal="admin"] .page-hero,
+ body[data-portal="leader"] .page-hero{padding:7px 0 15px!important}
+ body[data-portal="admin"] .page-hero h1,
+ body[data-portal="leader"] .page-hero h1{font-size:30px!important}
+ body[data-portal="admin"] .gp-stat,
+ body[data-portal="leader"] .gp-stat{min-height:87px!important;padding:13px 15px!important}
+}
