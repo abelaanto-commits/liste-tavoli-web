@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="it"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#172033"><title>Liste Tavoli · Amministrazione</title>
+<meta name="theme-color" content="#0d0f14"><meta name="description" content="Gestionale Privé — controllo eventi, accessi e team"><title>Gestionale Privé · Amministrazione</title>
 <style>
 :root{font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#1a2434;background:#f4f6f9}
 *{box-sizing:border-box}body{margin:0}header{background:#172033;color:#fff;padding:20px 5vw}
@@ -34,21 +34,21 @@ a{color:#bdd3f3;text-decoration:none}a:hover{text-decoration:underline}
 .page-link{color:#315d92;font-size:13px}
 #loginSection{max-width:520px;margin:34px auto}
 @media(max-width:660px){.cols,.checks{grid-template-columns:1fr}h1{font-size:21px}main{padding:16px 12px 55px}.card{padding:18px}.tabs{flex-wrap:wrap}}
-</style></head><body>
-<header><div class="wrap"><div><div class="brand">LT · Liste Tavoli</div><p>Amministrazione eventi e capigruppo · versione stabile</p></div>
-<div class="actions"><span id="accountLabel" class="muted" style="color:#dfebf9"></span><a href="./index.html?legacy=1">Tavoli, ingressi e PDF</a><button id="logoutBtn" class="secondary hidden" type="button">Esci</button></div></div></header>
+</style><link rel="stylesheet" href="./premium.css?v=20261110-p1"></head><body data-portal="admin">
+<header class="site-header"><div class="wrap"><div class="brand-lockup"><div class="brand-mark" aria-hidden="true"><span>GP</span></div><div class="brand-text"><span class="brand-kicker">EVENT OPERATIONS</span><span class="brand-name">Gestionale <i>Privé</i></span></div></div><div class="actions"><span id="accountLabel" class="muted"></span><a href="./index.html?legacy=1">Ingressi e PDF ↗</a><button id="logoutBtn" class="secondary hidden" type="button">Esci</button></div></div></header>
 <main>
 <div id="globalStatus" class="status show">Connessione al gestionale in corso…</div>
 <section id="loginSection" class="card hidden">
-<h1>Accesso amministratore</h1><p class="muted">Utilizza le credenziali del gestionale. Non è necessario inviarle a ChatGPT.</p>
+<span class="panel-kicker">ACCESSO RISERVATO · ADMIN</span><h1>La regia del tuo privé.</h1><p class="muted">Accedi per organizzare eventi, coordinare il team e gestire ogni dettaglio.</p>
 <form id="loginForm"><div class="field"><label for="loginEmail">Email</label><input type="email" id="loginEmail" autocomplete="username" required></div>
 <div class="field"><label for="loginPassword">Password</label><input type="password" id="loginPassword" autocomplete="current-password" required></div>
 <button id="loginBtn" type="submit" class="primary">Accedi</button></form></section>
 <section id="workspace" class="hidden">
-<h1>Amministrazione</h1><p class="muted">Salvataggio diretto su Supabase: ogni operazione mostra il risultato effettivo del server.</p>
-<div class="tabs"><button type="button" id="tabEvents" class="active">Eventi</button><button type="button" id="tabUsers">Capigruppo e addetti</button></div>
+<div class="page-hero"><span class="eyebrow">CONTROL ROOM / AMMINISTRAZIONE</span><h1>La regia di ogni <em>serata.</em></h1><p>Un unico spazio per programmare gli eventi, coordinare il team e seguire tutto ciò che conta.</p></div>
+<div class="gp-stats"><div class="gp-stat featured"><div class="gp-stat-label">Eventi in programma</div><div class="gp-stat-value" id="statOpen">0</div><div class="gp-stat-foot"><span class="live-dot"></span> Liste aperte</div></div><div class="gp-stat"><div class="gp-stat-label">Eventi totali</div><div class="gp-stat-value" id="statEvents">0</div><div class="gp-stat-foot">Organizzati nel gestionale</div></div><div class="gp-stat"><div class="gp-stat-label">Team operativo</div><div class="gp-stat-value" id="statTeam">0</div><div class="gp-stat-foot">Capigruppo e addetti attivi</div></div></div>
+<div class="tabs" role="tablist" aria-label="Sezioni amministrazione"><button type="button" id="tabEvents" class="active" role="tab" aria-controls="eventsSection">01 · Eventi</button><button type="button" id="tabUsers" role="tab" aria-controls="usersSection">02 · Team e accessi</button></div>
 <section id="eventsSection">
-<div class="card"><h2 id="eventFormTitle">Crea evento</h2>
+<div class="card"><div class="panel-heading"><div><span class="panel-kicker">01 / PROGRAMMAZIONE</span><h2 id="eventFormTitle">Crea evento</h2></div><span class="panel-seq" aria-hidden="true">01</span></div>
 <form id="eventForm" novalidate>
 <input type="hidden" id="eventId">
 <div class="field"><label for="eventName">Nome evento *</label><input id="eventName" type="text" required maxlength="150"></div>
@@ -61,10 +61,10 @@ a{color:#bdd3f3;text-decoration:none}a:hover{text-decoration:underline}
 <div id="eventMsg" class="status" role="status"></div>
 <div class="actions"><button id="saveEventBtn" class="primary" type="submit">Salva evento</button><button id="cancelEventBtn" type="button" class="secondary hidden">Annulla modifica</button></div>
 </form></div>
-<div class="card"><h2>Eventi salvati <span id="eventsCount" class="pill">0</span></h2><div class="actions" style="margin-bottom:12px"><button id="reloadEvents" class="secondary" type="button">Aggiorna elenco</button><span class="muted">L'elenco è letto direttamente dal database.</span></div><div id="eventsList" class="list"></div></div>
+<div class="card"><div class="panel-heading"><div><span class="panel-kicker">ARCHIVIO EVENTI</span><h2>Le tue serate <span id="eventsCount" class="pill">0</span></h2></div><span class="panel-seq" aria-hidden="true">02</span></div><div class="actions" style="margin-bottom:12px"><button id="reloadEvents" class="secondary" type="button">Aggiorna elenco</button><span class="muted">L'elenco è letto direttamente dal database.</span></div><div id="eventsList" class="list"></div></div>
 </section>
 <section id="usersSection" class="hidden">
-<div class="card"><h2 id="userFormTitle">Crea capogruppo o addetto</h2>
+<div class="card"><div class="panel-heading"><div><span class="panel-kicker">02 / PERSONE E PERMESSI</span><h2 id="userFormTitle">Crea capogruppo o addetto</h2></div><span class="panel-seq" aria-hidden="true">01</span></div>
 <form id="userForm" novalidate><input type="hidden" id="userId">
 <div class="field"><label for="userName">Nome e cognome *</label><input id="userName" required type="text"></div>
 <div class="cols"><div class="field"><label for="userEmail">Email di accesso *</label><input id="userEmail" required type="email"></div>
@@ -74,9 +74,9 @@ a{color:#bdd3f3;text-decoration:none}a:hover{text-decoration:underline}
 <div class="field"><label>Eventi abilitati (facoltativi)</label><div id="eventChecks" class="checks"></div></div>
 <div id="userMsg" class="status" role="status"></div>
 <div class="actions"><button id="saveUserBtn" class="primary" type="submit">Salva capogruppo / addetto</button><button id="cancelUserBtn" type="button" class="secondary hidden">Annulla modifica</button></div></form></div>
-<div class="card"><h2>Utenti registrati</h2><div id="usersList" class="list"></div></div>
+<div class="card"><div class="panel-heading"><div><span class="panel-kicker">TEAM ATTUALE</span><h2>Le persone del privé</h2></div><span class="panel-seq" aria-hidden="true">02</span></div><div id="usersList" class="list"></div></div>
 </section>
-<p class="muted">Le credenziali e i dati vengono inviati soltanto al progetto Supabase del gestionale. Nessun dato viene salvato su GitHub.</p>
+<p class="muted">Accesso riservato. Ogni operazione viene confermata dal sistema di gestione.</p>
 </section></main>
 <noscript><p>Attiva JavaScript nel browser per utilizzare il gestionale.</p></noscript>
 <script>
@@ -132,7 +132,7 @@ async function login(email,password){
 }
 async function verifyAdmin(){
  const auth=await api("/auth/v1/user");
- if(!auth?.id)throw new Error("Account non riconosciuto da Supabase.");
+ if(!auth?.id)throw new Error("Account non riconosciuto. Effettua nuovamente l’accesso.");
  const p=await api("/rest/v1/profiles?select=id%2Crole%2Cactive%2Cfull_name&id=eq."+encodeURIComponent(auth.id));
  if(!Array.isArray(p)||p.length!==1||p[0].role!=="admin"||p[0].active!==true)throw new Error("Questo account non è abilitato come amministratore.");
  adminId=auth.id;$("accountLabel").textContent=p[0].full_name||auth.email||"Amministratore";
@@ -148,6 +148,9 @@ async function reload(){
 }
 function draw(){
  $("eventsCount").textContent=String(events.length);
+ $("statEvents").textContent=String(events.length);
+ $("statOpen").textContent=String(events.filter(e=>e.status==="open"&&new Date(e.deadline).getTime()>Date.now()).length);
+ $("statTeam").textContent=String(users.filter(u=>u.active&&(u.role==="capogruppo"||u.role==="addetto")).length);
  $("eventsList").innerHTML=events.length?events.map(e=>'<div class="record"><div><strong>'+esc(e.title)+'</strong><small>'+esc(e.event_date)+' · '+esc(e.venue||"Senza locale")+' · '+esc(e.status)+'</small></div><button type="button" class="secondary" data-edit-event="'+esc(e.id)+'">Modifica</button></div>').join(""):'<p class="muted">Nessun evento salvato.</p>';
  const available=events.map(e=>'<label><input name="assigned" type="checkbox" value="'+esc(e.id)+'">'+esc(e.title)+'</label>').join("");
  const selected=Array.from(document.querySelectorAll('#eventChecks input:checked')).map(x=>x.value);
@@ -194,7 +197,7 @@ function editUser(id){
 }
 async function onSaveEvent(ev){
  ev.preventDefault();const b="saveEventBtn";busy(b,true,"Salvataggio in corso…");
- report($("eventMsg"),"Invio evento a Supabase…");
+ report($("eventMsg"),"Salvataggio dell’evento in corso…");
  try{
   const title=str($("eventName").value),date=$("eventDate").value,dlDate=$("deadlineDate").value,dlTime=$("deadlineTime").value;
   if(!title||!date||!dlDate||!dlTime)throw new Error("Nome, data evento e data/ora di chiusura sono obbligatori.");
@@ -215,7 +218,7 @@ async function onSaveEvent(ev){
 }
 async function onSaveUser(ev){
  ev.preventDefault();const b="saveUserBtn";busy(b,true,"Salvataggio in corso…");
- report($("userMsg"),"Invio dati account a Supabase…");
+ report($("userMsg"),"Salvataggio dell’account in corso…");
  let created=false;
  try{
   const oldId=$("userId").value,name=str($("userName").value),email=str($("userEmail").value).toLowerCase(),password=$("userPass").value;
