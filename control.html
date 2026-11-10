@@ -36,20 +36,20 @@ a{color:#bdd3f3;text-decoration:none}a:hover{text-decoration:underline}
 #loginSection{max-width:520px;margin:34px auto}
 @media(max-width:660px){.cols,.checks{grid-template-columns:1fr}h1{font-size:21px}main{padding:16px 12px 55px}.card{padding:18px}.tabs{flex-wrap:wrap}}
 </style><link rel="stylesheet" href="./premium.css?v=20261110-p1"></head><body data-portal="admin">
-<header class="site-header"><div class="wrap"><div class="brand-lockup"><div class="brand-mark" aria-hidden="true"><span>GP</span></div><div class="brand-text"><span class="brand-kicker">EVENT OPERATIONS</span><span class="brand-name">Gestionale <i>Privé</i></span></div></div><div class="actions"><span id="accountLabel" class="muted"></span><a href="./index.html?legacy=1">Ingressi e PDF ↗</a><button id="logoutBtn" class="secondary hidden" type="button">Esci</button></div></div></header>
+<header class="site-header"><div class="wrap"><div class="brand-lockup"><div class="brand-mark" aria-hidden="true"><span>GP</span></div><div class="brand-text"><span class="brand-name">Gestionale <i>Privé</i></span></div></div><div class="actions"><span id="accountLabel" class="muted"></span><a href="./index.html?legacy=1">Ingressi e PDF ↗</a><button id="logoutBtn" class="secondary hidden" type="button">Esci</button></div></div></header>
 <main>
 <div id="globalStatus" class="status show">Connessione al gestionale in corso…</div>
 <section id="loginSection" class="card hidden">
-<span class="panel-kicker">ACCESSO RISERVATO · ADMIN</span><h1>La regia del tuo privé.</h1><p class="muted">Accedi per organizzare eventi, coordinare il team e gestire ogni dettaglio.</p>
+<h1>Accesso amministratore</h1>
 <form id="loginForm"><div class="field"><label for="loginEmail">Email</label><input type="email" id="loginEmail" autocomplete="username" required></div>
 <div class="field"><label for="loginPassword">Password</label><input type="password" id="loginPassword" autocomplete="current-password" required></div>
 <button id="loginBtn" type="submit" class="primary">Accedi</button></form></section>
 <section id="workspace" class="hidden">
-<div class="page-hero"><span class="eyebrow">CONTROL ROOM / AMMINISTRAZIONE</span><h1>La regia di ogni <em>serata.</em></h1><p>Un unico spazio per programmare gli eventi, coordinare il team e seguire tutto ciò che conta.</p></div>
-<div class="gp-stats"><div class="gp-stat featured"><div class="gp-stat-label">Eventi in programma</div><div class="gp-stat-value" id="statOpen">0</div><div class="gp-stat-foot"><span class="live-dot"></span> Liste aperte</div></div><div class="gp-stat"><div class="gp-stat-label">Eventi totali</div><div class="gp-stat-value" id="statEvents">0</div><div class="gp-stat-foot">Organizzati nel gestionale</div></div><div class="gp-stat"><div class="gp-stat-label">Team operativo</div><div class="gp-stat-value" id="statTeam">0</div><div class="gp-stat-foot">Capigruppo e addetti attivi</div></div></div>
-<div class="tabs" role="tablist" aria-label="Sezioni amministrazione"><button type="button" id="tabEvents" class="active" role="tab" aria-controls="eventsSection">01 · Eventi</button><button type="button" id="tabUsers" role="tab" aria-controls="usersSection">02 · Team e accessi</button></div>
+<div class="page-hero"><h1>Amministrazione</h1></div>
+<div class="gp-stats"><div class="gp-stat featured"><div class="gp-stat-label">Eventi aperti</div><div class="gp-stat-value" id="statOpen">0</div></div><div class="gp-stat"><div class="gp-stat-label">Eventi totali</div><div class="gp-stat-value" id="statEvents">0</div></div><div class="gp-stat"><div class="gp-stat-label">Team attivo</div><div class="gp-stat-value" id="statTeam">0</div></div></div>
+<div class="tabs" role="tablist" aria-label="Sezioni amministrazione"><button type="button" id="tabEvents" class="active" role="tab" aria-controls="eventsSection">Eventi</button><button type="button" id="tabUsers" role="tab" aria-controls="usersSection">Team</button></div>
 <section id="eventsSection">
-<div class="card"><div class="panel-heading"><div><span class="panel-kicker">01 / PROGRAMMAZIONE</span><h2 id="eventFormTitle">Crea evento</h2></div><span class="panel-seq" aria-hidden="true">01</span></div>
+<div class="card"><div class="panel-heading"><h2 id="eventFormTitle">Crea evento</h2></div>
 <form id="eventForm" novalidate>
 <input type="hidden" id="eventId">
 <div class="field"><label for="eventName">Nome evento *</label><input id="eventName" type="text" required maxlength="150"></div>
@@ -62,10 +62,10 @@ a{color:#bdd3f3;text-decoration:none}a:hover{text-decoration:underline}
 <div id="eventMsg" class="status" role="status"></div>
 <div class="actions"><button id="saveEventBtn" class="primary" type="submit">Salva evento</button><button id="cancelEventBtn" type="button" class="secondary hidden">Annulla modifica</button></div>
 </form></div>
-<div class="card"><div class="panel-heading"><div><span class="panel-kicker">ARCHIVIO EVENTI</span><h2>Le tue serate <span id="eventsCount" class="pill">0</span></h2></div><span class="panel-seq" aria-hidden="true">02</span></div><div class="actions" style="margin-bottom:12px"><button id="reloadEvents" class="secondary" type="button">Aggiorna elenco</button><span class="muted">L'elenco è letto direttamente dal database.</span></div><div id="eventsList" class="list"></div></div>
+<div class="card"><div class="panel-heading"><h2>Eventi <span id="eventsCount" class="pill">0</span></h2></div><div class="actions" style="margin-bottom:12px"><button id="reloadEvents" class="secondary" type="button">Aggiorna elenco</button></div><div id="eventsList" class="list"></div></div>
 </section>
 <section id="usersSection" class="hidden">
-<div class="card"><div class="panel-heading"><div><span class="panel-kicker">02 / PERSONE E PERMESSI</span><h2 id="userFormTitle">Crea capogruppo o addetto</h2></div><span class="panel-seq" aria-hidden="true">01</span></div>
+<div class="card"><div class="panel-heading"><h2 id="userFormTitle">Crea capogruppo o addetto</h2></div>
 <form id="userForm" novalidate><input type="hidden" id="userId">
 <div class="field"><label for="userName">Nome e cognome *</label><input id="userName" required type="text"></div>
 <div class="cols"><div class="field"><label for="userEmail">Email di accesso *</label><input id="userEmail" required type="email"></div>
@@ -75,9 +75,9 @@ a{color:#bdd3f3;text-decoration:none}a:hover{text-decoration:underline}
 <div class="field"><label>Eventi abilitati (facoltativi)</label><div id="eventChecks" class="checks"></div></div>
 <div id="userMsg" class="status" role="status"></div>
 <div class="actions"><button id="saveUserBtn" class="primary" type="submit">Salva capogruppo / addetto</button><button id="cancelUserBtn" type="button" class="secondary hidden">Annulla modifica</button></div></form></div>
-<div class="card"><div class="panel-heading"><div><span class="panel-kicker">TEAM ATTUALE</span><h2>Le persone del privé</h2></div><span class="panel-seq" aria-hidden="true">02</span></div><div id="usersList" class="list"></div></div>
+<div class="card"><div class="panel-heading"><h2>Utenti registrati</h2></div><div id="usersList" class="list"></div></div>
 </section>
-<p class="muted">Accesso riservato. Ogni operazione viene confermata dal sistema di gestione.</p>
+
 </section></main>
 <noscript><p>Attiva JavaScript nel browser per utilizzare il gestionale.</p></noscript>
 <script>
