@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="it"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#172033"><title>Liste Tavoli · Amministrazione</title>
+<style>
+:root{font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#1a2434;background:#f4f6f9}
+*{box-sizing:border-box}body{margin:0}header{background:#172033;color:#fff;padding:20px 5vw}
+header .wrap{max-width:1080px;margin:auto;display:flex;justify-content:space-between;gap:14px;align-items:center;flex-wrap:wrap}
+.brand{font-size:21px;font-weight:800;letter-spacing:-.45px}header p{margin:3px 0 0;color:#c1cad9;font-size:12px}
+main{max-width:1080px;margin:0 auto;padding:26px 18px 80px}
+h1{font-size:24px;letter-spacing:-.5px}h2{font-size:18px;margin:0 0 17px}
+.card{background:#fff;border:1px solid #e2e7ef;border-radius:16px;padding:22px;margin:14px 0 24px;box-shadow:0 4px 14px #1e2f4510}
+.cols{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.field{margin:0 0 15px}label{display:block;font-size:13px;font-weight:650;color:#354054;margin:0 0 6px}
+input,select{font:inherit;background:white;width:100%;padding:11px 12px;border:1px solid #cdd6e1;border-radius:9px;min-height:44px;color:#182335}
+input:focus,select:focus{border-color:#375f9b;outline:3px solid #d8e8fe}
+button{font:inherit;border:0;cursor:pointer;border-radius:9px;padding:11px 17px;font-weight:700;min-height:41px}
+button.primary{color:#fff;background:#192539}button.secondary{background:#e9eef5;color:#243651}
+button:disabled{opacity:.6;cursor:wait}button:hover:not(:disabled){filter:brightness(.94)}
+.actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.pill{padding:6px 12px;border-radius:30px;font-size:12px;background:#e8f0fc;color:#255182;font-weight:650}
+.tabs{display:flex;gap:10px;margin-bottom:16px}.tabs button{border:1px solid #d6dfe9;background:#fff}
+.tabs button.active{background:#192539;color:#fff}
+.status{border-radius:10px;padding:12px 14px;margin:12px 0;font-size:14px;white-space:pre-wrap;display:none;border:1px solid #d8e3f0;background:#f2f6fd}
+.status.show{display:block}.status.error{background:#fff0f0;color:#8b1d1d;border-color:#e9bdbd}
+.status.success{background:#eef8f1;color:#17603b;border-color:#b9e1c6}
+.muted{color:#708092;font-size:13px}.hidden{display:none!important}
+.list{display:grid;gap:9px}.record{border:1px solid #e2e9f0;padding:13px;border-radius:11px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.record strong{font-size:14px}.record small{display:block;color:#748294;margin-top:4px}.record button{font-size:12px;padding:7px 10px;min-height:32px}
+.checks{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;padding:12px;border:1px solid #e1e7ef;border-radius:11px;max-height:200px;overflow:auto}
+.checks label{display:flex;gap:8px;align-items:center;margin:0;font-weight:500}
+.checks input{width:16px;height:16px;min-height:0;flex-shrink:0}
+a{color:#bdd3f3;text-decoration:none}a:hover{text-decoration:underline}
+.page-link{color:#315d92;font-size:13px}
+#loginSection{max-width:520px;margin:34px auto}
+@media(max-width:660px){.cols,.checks{grid-template-columns:1fr}h1{font-size:21px}main{padding:16px 12px 55px}.card{padding:18px}.tabs{flex-wrap:wrap}}
+</style></head><body>
+<header><div class="wrap"><div><div class="brand">LT · Liste Tavoli</div><p>Amministrazione eventi e capigruppo · versione stabile</p></div>
+<div class="actions"><span id="accountLabel" class="muted" style="color:#dfebf9"></span><a href="./index.html?legacy=1">Tavoli, ingressi e PDF</a><button id="logoutBtn" class="secondary hidden" type="button">Esci</button></div></div></header>
+<main>
+<div id="globalStatus" class="status show">Connessione al gestionale in corso…</div>
+<section id="loginSection" class="card hidden">
+<h1>Accesso amministratore</h1><p class="muted">Utilizza le credenziali del gestionale. Non è necessario inviarle a ChatGPT.</p>
+<form id="loginForm"><div class="field"><label for="loginEmail">Email</label><input type="email" id="loginEmail" autocomplete="username" required></div>
+<div class="field"><label for="loginPassword">Password</label><input type="password" id="loginPassword" autocomplete="current-password" required></div>
+<button id="loginBtn" type="submit" class="primary">Accedi</button></form></section>
+<section id="workspace" class="hidden">
+<h1>Amministrazione</h1><p class="muted">Salvataggio diretto su Supabase: ogni operazione mostra il risultato effettivo del server.</p>
+<div class="tabs"><button type="button" id="tabEvents" class="active">Eventi</button><button type="button" id="tabUsers">Capigruppo e addetti</button></div>
+<section id="eventsSection">
+<div class="card"><h2 id="eventFormTitle">Crea evento</h2>
+<form id="eventForm">
+<input type="hidden" id="eventId">
+<div class="field"><label for="eventName">Nome evento *</label><input id="eventName" type="text" required maxlength="150"></div>
+<div class="cols"><div class="field"><label for="venue">Locale</label><input id="venue" type="text"></div>
+<div class="field"><label for="eventDate">Data evento *</label><input id="eventDate" type="date" required></div></div>
+<div class="cols"><div class="field"><label for="deadlineDate">Data chiusura liste *</label><input id="deadlineDate" type="date" required></div>
+<div class="field"><label for="deadlineTime">Ora chiusura liste *</label><input id="deadlineTime" type="time" required></div></div>
+<div class="cols"><div class="field"><label for="eventStatus">Stato</label><select id="eventStatus"><option value="open">Liste aperte</option><option value="draft">Bozza</option><option value="closed">Liste chiuse</option></select></div>
+<div class="field"><label for="pdfEmail">Email PDF (facoltativa)</label><input id="pdfEmail" type="email"></div></div>
+<div id="eventMsg" class="status" role="status"></div>
+<div class="actions"><button id="saveEventBtn" class="primary" type="submit">Salva evento</button><button id="cancelEventBtn" type="button" class="secondary hidden">Annulla modifica</button></div>
+</form></div>
+<div class="card"><h2>Eventi salvati <span id="eventsCount" class="pill">0</span></h2><div class="actions" style="margin-bottom:12px"><button id="reloadEvents" class="secondary" type="button">Aggiorna elenco</button><span class="muted">L'elenco è letto direttamente dal database.</span></div><div id="eventsList" class="list"></div></div>
+</section>
+<section id="usersSection" class="hidden">
+<div class="card"><h2 id="userFormTitle">Crea capogruppo o addetto</h2>
+<form id="userForm"><input type="hidden" id="userId">
+<div class="field"><label for="userName">Nome e cognome *</label><input id="userName" required type="text"></div>
+<div class="cols"><div class="field"><label for="userEmail">Email di accesso *</label><input id="userEmail" required type="email"></div>
+<div class="field"><label for="userPass">Password iniziale (almeno 10 caratteri) *</label><input id="userPass" type="password" minlength="10" autocomplete="new-password"></div></div>
+<div class="cols"><div class="field"><label for="userRole">Ruolo</label><select id="userRole"><option value="capogruppo">Capogruppo</option><option value="addetto">Addetto liste</option></select></div>
+<div class="field"><label for="userActive">Stato</label><select id="userActive"><option value="true">Attivo</option><option value="false">Disattivato</option></select></div></div>
+<div class="field"><label>Eventi abilitati (facoltativi)</label><div id="eventChecks" class="checks"></div></div>
+<div id="userMsg" class="status" role="status"></div>
+<div class="actions"><button id="saveUserBtn" class="primary" type="submit">Salva capogruppo / addetto</button><button id="cancelUserBtn" type="button" class="secondary hidden">Annulla modifica</button></div></form></div>
+<div class="card"><h2>Utenti registrati</h2><div id="usersList" class="list"></div></div>
+</section>
+<p class="muted">Le credenziali e i dati vengono inviati soltanto al progetto Supabase del gestionale. Nessun dato viene salvato su GitHub.</p>
+</section></main>
+<noscript><p>Attiva JavaScript nel browser per utilizzare il gestionale.</p></noscript>
+<script>
+"use strict";
+(function(){
+const URL="https://cyjuwuipfazjtkvaibpx.supabase.co";
+const KEY="sb_publishable_EJdMDREvMl5kDbMoUjW2Iw_axkQ-h6G";
+const STORE="sb-cyjuwuipfazjtkvaibpx-auth-token";
+const $=id=>document.getElementById(id);
+let session=null,adminId=null,events=[],users=[],assignments=[],refreshing=null;
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const str=x=>String(x??"").trim();
+const dateRome=d=>new Intl.DateTimeFormat("en-CA",{timeZone:"Europe/Rome",year:"numeric",month:"2-digit",day:"2-digit"}).format(d);
+const report=(el,msg,type="")=>{el.textContent=msg;el.className="status show"+(type?" "+type:"");};
+const show=(el,yes)=>el.classList.toggle("hidden",!yes);
+const busy=(id,on,msg)=>{const b=$(id);if(on){b.dataset.old=b.textContent;b.textContent=msg||"Salvataggio…";b.disabled=true;}else{b.textContent=b.dataset.old||b.textContent;b.disabled=false;}};
+function saveSession(s){session=s;try{localStorage.setItem(STORE,JSON.stringify(s));}catch(e){report($("globalStatus"),"Browser: impossibile memorizzare la sessione. "+e.message,"error");}}
+function clearSession(){session=null;adminId=null;try{localStorage.removeItem(STORE)}catch(e){}}
+function tokenValid(){return session?.access_token&&(!session.expires_at||session.expires_at>Math.floor(Date.now()/1000)+60);}
+async function http(url,opts={}){
+ const ctrl=new AbortController();const timer=setTimeout(()=>ctrl.abort(),18000);
+ try{
+  const r=await fetch(url,{...opts,signal:ctrl.signal});
+  const raw=await r.text();let data=null;try{data=raw?JSON.parse(raw):null}catch(e){data={message:raw.slice(0,200)}}
+  if(!r.ok){const msg=data?.message||data?.error_description||data?.error||data?.msg||"Errore HTTP "+r.status;throw new Error(String(msg)+" (HTTP "+r.status+")");}
+  return data;
+ }catch(e){if(e.name==="AbortError")throw new Error("Il server non ha risposto entro 18 secondi.");throw e;}
+ finally{clearTimeout(timer);}
+}
+async function refreshToken(){
+ if(refreshing)return refreshing;
+ refreshing=(async()=>{
+  if(!session?.refresh_token)throw new Error("Sessione scaduta. Accedi nuovamente.");
+  const data=await http(URL+"/auth/v1/token?grant_type=refresh_token",{method:"POST",headers:{"apikey":KEY,"content-type":"application/json"},body:JSON.stringify({refresh_token:session.refresh_token})});
+  if(!data?.access_token)throw new Error("Impossibile rinnovare la sessione.");
+  saveSession({...session,...data,expires_at:Math.floor(Date.now()/1000)+(data.expires_in||3600)});
+ })();
+ try{await refreshing}finally{refreshing=null}
+}
+async function api(path,method="GET",payload,attempt=0){
+ if(!session?.access_token)throw new Error("Devi effettuare l'accesso.");
+ if(!tokenValid())await refreshToken();
+ const headers={"apikey":KEY,"authorization":"Bearer "+session.access_token};
+ if(payload!==undefined)headers["content-type"]="application/json";
+ if(path.startsWith("/rest/")&&method!=="GET")headers["prefer"]="return=representation";
+ try{return await http(URL+path,{method,headers,body:payload===undefined?undefined:JSON.stringify(payload)})}
+ catch(e){if(attempt===0&&/\bHTTP 401\b/.test(e.message)){await refreshToken();return api(path,method,payload,1)}throw e}
+}
+async function login(email,password){
+ const data=await http(URL+"/auth/v1/token?grant_type=password",{method:"POST",headers:{"apikey":KEY,"content-type":"application/json"},body:JSON.stringify({email,password})});
+ if(!data?.access_token)throw new Error("Accesso non confermato dal server.");
+ saveSession({...data,expires_at:Math.floor(Date.now()/1000)+(data.expires_in||3600)});
+}
+async function verifyAdmin(){
+ const auth=await api("/auth/v1/user");
+ if(!auth?.id)throw new Error("Account non riconosciuto da Supabase.");
+ const p=await api("/rest/v1/profiles?select=id%2Crole%2Cactive%2Cfull_name&id=eq."+encodeURIComponent(auth.id));
+ if(!Array.isArray(p)||p.length!==1||p[0].role!=="admin"||p[0].active!==true)throw new Error("Questo account non è abilitato come amministratore.");
+ adminId=auth.id;$("accountLabel").textContent=p[0].full_name||auth.email||"Amministratore";
+}
+async function reload(){
+ const [ev,us,as]=await Promise.all([
+  api("/rest/v1/events?select=*&order=event_date.desc"),
+  api("/rest/v1/profiles?select=id%2Cfull_name%2Cemail%2Crole%2Cactive&order=full_name.asc"),
+  api("/rest/v1/event_assignments?select=*")
+ ]);
+ if(!Array.isArray(ev)||!Array.isArray(us)||!Array.isArray(as))throw new Error("Il database ha restituito dati non validi.");
+ events=ev;users=us;assignments=as;draw();
+}
+function draw(){
+ $("eventsCount").textContent=String(events.length);
+ $("eventsList").innerHTML=events.length?events.map(e=>'<div class="record"><div><strong>'+esc(e.title)+'</strong><small>'+esc(e.event_date)+' · '+esc(e.venue||"Senza locale")+' · '+esc(e.status)+'</small></div><button type="button" class="secondary" data-edit-event="'+esc(e.id)+'">Modifica</button></div>').join(""):'<p class="muted">Nessun evento salvato.</p>';
+ const available=events.map(e=>'<label><input name="assigned" type="checkbox" value="'+esc(e.id)+'">'+esc(e.title)+'</label>').join("");
+ const selected=Array.from(document.querySelectorAll('#eventChecks input:checked')).map(x=>x.value);
+ $("eventChecks").innerHTML=available||'<p class="muted">Crea prima un evento per abilitarlo.</p>';
+ document.querySelectorAll('#eventChecks input').forEach(x=>{x.checked=selected.includes(x.value)});
+ const staff=users.filter(x=>x.role==="capogruppo"||x.role==="addetto");
+ $("usersList").innerHTML=staff.length?staff.map(u=>'<div class="record"><div><strong>'+esc(u.full_name)+'</strong><small>'+esc(u.email||"")+' · '+(u.role==="addetto"?"Addetto":"Capogruppo")+' · '+(u.active?"Attivo":"Disattivato")+' · '+assignments.filter(a=>a.user_id===u.id).length+' eventi</small></div><button type="button" class="secondary" data-edit-user="'+esc(u.id)+'">Gestisci</button></div>').join(""):'<p class="muted">Nessun capogruppo o addetto creato.</p>';
+}
+function switchTab(which){
+ const ev=which==="events";show($("eventsSection"),ev);show($("usersSection"),!ev);
+ $("tabEvents").classList.toggle("active",ev);$("tabUsers").classList.toggle("active",!ev);
+}
+function resetEvent(){
+ $("eventForm").reset();$("eventId").value="";$("eventFormTitle").textContent="Crea evento";
+ $("saveEventBtn").textContent="Salva evento";show($("cancelEventBtn"),false);
+ const today=dateRome(new Date());$("eventDate").value=today;$("deadlineDate").value=today;$("deadlineTime").value="23:30";
+}
+function editEvent(id){
+ const e=events.find(e=>e.id===id);if(!e)return;
+ const dt=new Date(e.deadline),ymd=dateRome(dt);
+ const hhmm=new Intl.DateTimeFormat("en-GB",{timeZone:"Europe/Rome",hour:"2-digit",minute:"2-digit",hourCycle:"h23"}).format(dt);
+ $("eventId").value=e.id;$("eventName").value=e.title;$("venue").value=e.venue||"";
+ $("eventDate").value=e.event_date;$("deadlineDate").value=ymd;$("deadlineTime").value=hhmm;
+ $("eventStatus").value=e.status;$("pdfEmail").value=e.admin_email||"";
+ $("eventFormTitle").textContent="Modifica evento";$("saveEventBtn").textContent="Aggiorna evento";show($("cancelEventBtn"),true);
+ switchTab("events");$("eventForm").scrollIntoView({behavior:"smooth",block:"start"});
+}
+function resetUser(){
+ $("userForm").reset();$("userId").value="";$("userEmail").readOnly=false;$("userPass").required=true;
+ $("userRole").value="capogruppo";$("userActive").value="true";
+ $("userFormTitle").textContent="Crea capogruppo o addetto";$("saveUserBtn").textContent="Salva capogruppo / addetto";
+ show($("cancelUserBtn"),false);
+ document.querySelectorAll('#eventChecks input').forEach(x=>{x.checked=false});
+}
+function editUser(id){
+ const u=users.find(u=>u.id===id);if(!u)return;
+ $("userId").value=u.id;$("userName").value=u.full_name;$("userEmail").value=u.email||"";
+ $("userEmail").readOnly=true;$("userPass").value="";$("userPass").required=false;
+ $("userRole").value=u.role;$("userActive").value=String(u.active);
+ $("userFormTitle").textContent="Gestisci account";$("saveUserBtn").textContent="Aggiorna account";
+ show($("cancelUserBtn"),true);
+ document.querySelectorAll('#eventChecks input').forEach(x=>{x.checked=assignments.some(a=>a.user_id===u.id&&a.event_id===x.value)});
+ switchTab("users");$("userForm").scrollIntoView({behavior:"smooth",block:"start"});
+}
+async function onSaveEvent(ev){
+ ev.preventDefault();const b="saveEventBtn";busy(b,true,"Salvataggio in corso…");
+ report($("eventMsg"),"Invio evento a Supabase…");
+ try{
+  const title=str($("eventName").value),date=$("eventDate").value,dlDate=$("deadlineDate").value,dlTime=$("deadlineTime").value;
+  if(!title||!date||!dlDate||!dlTime)throw new Error("Nome, data evento e data/ora di chiusura sono obbligatori.");
+  const dt=new Date(dlDate+"T"+dlTime+":00");if(!Number.isFinite(dt.getTime()))throw new Error("Data e ora di chiusura non valide.");
+  const payload={title,venue:str($("venue").value),event_date:date,deadline:dt.toISOString(),status:$("eventStatus").value,admin_email:str($("pdfEmail").value)||null};
+  const id=$("eventId").value;
+  const path="/rest/v1/events"+(id?"?id=eq."+encodeURIComponent(id):"");
+  const result=await api(path,id?"PATCH":"POST",payload);
+  if(!Array.isArray(result)||result.length!==1||!result[0]?.id)throw new Error("Il server non ha restituito la conferma del salvataggio.");
+  const savedId=result[0].id;
+  await reload();
+  if(!events.some(x=>x.id===savedId))throw new Error("La scrittura è riuscita, ma la verifica dell'evento non è ancora disponibile.");
+  resetEvent();report($("eventMsg"),"Evento salvato e verificato nel database.","success");
+  report($("globalStatus"),"Salvataggio evento confermato.","success");
+ }catch(e){report($("eventMsg"),"Errore: "+e.message,"error");report($("globalStatus"),"Salvataggio evento non riuscito: "+e.message,"error")}
+ finally{busy(b,false)}
+}
+async function onSaveUser(ev){
+ ev.preventDefault();const b="saveUserBtn";busy(b,true,"Salvataggio in corso…");
+ report($("userMsg"),"Invio dati account a Supabase…");
+ let created=false;
+ try{
+  const oldId=$("userId").value,name=str($("userName").value),email=str($("userEmail").value).toLowerCase(),password=$("userPass").value;
+  const role=$("userRole").value,active=$("userActive").value==="true";
+  if(!name||!email||(!oldId&&password.length<10)||(password&&password.length<10))throw new Error("Compila nome, email e password di almeno 10 caratteri.");
+  const data=await api("/functions/v1/manage-users","POST",{
+   action:oldId?"update_user":"create_user",id:oldId||undefined,
+   email,full_name:name,password,role,...(oldId?{active}:{})
+  });
+  if(!data?.ok)throw new Error(data?.error||"Il server non ha confermato la creazione dell'account.");
+  const uid=oldId||data.id;if(!uid)throw new Error("Account creato ma identificativo utente mancante.");
+  created=!oldId;
+  $("userId").value=uid;$("userEmail").readOnly=true;$("userPass").required=false;
+  const desired=Array.from(document.querySelectorAll('#eventChecks input:checked')).map(x=>x.value);
+  const previous=assignments.filter(a=>a.user_id===uid).map(a=>a.event_id);
+  report($("userMsg"),"Account salvato. Associazione agli eventi…");
+  for(const eid of previous.filter(x=>!desired.includes(x))){
+   await api("/rest/v1/event_assignments?user_id=eq."+encodeURIComponent(uid)+"&event_id=eq."+encodeURIComponent(eid),"DELETE");
+  }
+  for(const eid of desired.filter(x=>!previous.includes(x))){
+   await api("/rest/v1/event_assignments","POST",{user_id:uid,event_id:eid});
+  }
+  await reload();
+  if(!users.some(x=>x.id===uid))throw new Error("Account inserito, ma non ancora visibile nell'elenco.");
+  resetUser();report($("userMsg"),"Account salvato e verificato nel database.","success");
+  report($("globalStatus"),"Account capogruppo/addetto salvato correttamente.","success");
+ }catch(e){report($("userMsg"),(created?"Account creato, ma operazione incompleta: ":"Errore: ")+e.message,"error")}
+ finally{busy(b,false)}
+}
+async function init(){
+ resetEvent();
+ $("eventForm").addEventListener("submit",onSaveEvent);
+ $("userForm").addEventListener("submit",onSaveUser);
+ $("loginForm").addEventListener("submit",async ev=>{
+  ev.preventDefault();busy("loginBtn",true,"Accesso in corso…");
+  try{await login(str($("loginEmail").value),$("loginPassword").value);await verifyAdmin();await reload();show($("loginSection"),false);show($("workspace"),true);show($("logoutBtn"),true);report($("globalStatus"),"Accesso amministratore verificato.","success")}
+  catch(e){report($("globalStatus"),"Accesso fallito: "+e.message,"error");show($("loginSection"),true)}
+  finally{busy("loginBtn",false)}
+ });
+ $("tabEvents").addEventListener("click",()=>switchTab("events"));
+ $("tabUsers").addEventListener("click",()=>switchTab("users"));
+ $("cancelEventBtn").addEventListener("click",()=>resetEvent());
+ $("cancelUserBtn").addEventListener("click",()=>resetUser());
+ $("reloadEvents").addEventListener("click",async()=>{try{await reload();report($("globalStatus"),"Dati aggiornati dal database.","success")}catch(e){report($("globalStatus"),e.message,"error")}});
+ $("logoutBtn").addEventListener("click",async()=>{
+  try{if(session?.access_token)await api("/auth/v1/logout","POST")}catch(e){}
+  clearSession();show($("workspace"),false);show($("loginSection"),true);show($("logoutBtn"),false);$("accountLabel").textContent="";
+  report($("globalStatus"),"Sessione chiusa.");
+ });
+ document.addEventListener("click",ev=>{
+  const eventBtn=ev.target.closest("[data-edit-event]");if(eventBtn)editEvent(eventBtn.dataset.editEvent);
+  const userBtn=ev.target.closest("[data-edit-user]");if(userBtn)editUser(userBtn.dataset.editUser);
+ });
+ const cached=localStorage.getItem(STORE);
+ if(cached){try{session=JSON.parse(cached);await verifyAdmin();await reload();show($("workspace"),true);show($("logoutBtn"),true);report($("globalStatus"),"Collegato al database. Puoi salvare eventi e capigruppo.","success");return}
+  catch(e){clearSession();report($("globalStatus"),"Accedi per continuare: "+e.message,"error")}}
+ show($("loginSection"),true);report($("globalStatus"),"Accedi con un account amministratore per iniziare.");
+}
+init().catch(e=>{report($("globalStatus"),"Errore di avvio: "+e.message,"error");show($("loginSection"),true)});
+})();
+</script></body></html>
