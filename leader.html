@@ -1,0 +1,308 @@
+<!doctype html>
+<html lang="it"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#162033"><title>Liste Tavoli · Area Capogruppo</title>
+<style>
+:root{font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#f4f6fa;color:#172436}
+*{box-sizing:border-box}body{margin:0}header{background:#172136;color:#fff;padding:19px 5vw}
+.head{max-width:1050px;margin:auto;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.logo{font-size:21px;font-weight:800;letter-spacing:-.5px}header small{color:#b9c8dd}
+main{max-width:1050px;margin:auto;padding:23px 16px 70px}
+h1{font-size:25px;margin:8px 0 7px}h2{font-size:18px;margin:0 0 16px}
+.card{background:#fff;border:1px solid #e1e7f0;box-shadow:0 5px 20px #1426410a;border-radius:15px;padding:23px;margin:15px 0 24px}
+.cols{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.field{margin-bottom:15px}label{display:block;font-size:13px;font-weight:650;color:#354459;margin-bottom:7px}
+input,select,textarea{width:100%;font:inherit;min-height:43px;border:1px solid #c9d4e2;border-radius:9px;padding:10px 11px;color:#1b2940;background:white}
+textarea{resize:vertical;min-height:135px;line-height:1.55}
+input:focus,select:focus,textarea:focus{outline:3px solid #dceaff;border-color:#4773b3}
+button{font:inherit;font-size:14px;font-weight:700;padding:11px 15px;min-height:40px;border-radius:9px;border:0;cursor:pointer}
+button.primary{background:#1c3557;color:#fff}
+button.secondary{background:#e9eff7;color:#213652}
+button.danger{background:#fff1f1;color:#a52d38}
+button:disabled{opacity:.53;cursor:wait}
+.actions{display:flex;gap:9px;flex-wrap:wrap;align-items:center}
+.muted{font-size:13px;color:#75849a}.tiny{font-size:12px}
+.status{display:none;background:#eff5fe;border:1px solid #d5e3f4;border-radius:10px;padding:12px 14px;margin:10px 0 15px;white-space:pre-wrap;font-size:14px;line-height:1.45}
+.status.show{display:block}.status.error{background:#fff0f0;border-color:#efc4c4;color:#a0252d}
+.status.success{background:#eef9f1;border-color:#b8ddc4;color:#1a673b}
+.hidden{display:none!important}
+.badge{display:inline-flex;align-items:center;border-radius:40px;padding:5px 10px;background:#e9f3ef;color:#1c6b43;font-size:12px;font-weight:700}
+.badge.closed{background:#fff0e5;color:#8a541b}
+#loginSection{max-width:500px;margin:37px auto}
+.record{border:1px solid #e0e8f0;border-radius:12px;padding:15px;margin:12px 0}
+.record-head{display:flex;justify-content:space-between;gap:13px;align-items:center;flex-wrap:wrap}
+.record-title{font-size:17px;font-weight:800}.names{display:flex;flex-wrap:wrap;gap:7px;margin-top:12px}
+.name{display:inline-flex;align-items:center;gap:7px;font-size:13px;background:#f0f4f8;border:1px solid #e2e7ee;border-radius:8px;padding:5px 9px}
+.name button{min-height:0;padding:2px 5px;font-size:15px;color:#b53c43;background:transparent}
+a{color:#bed5f5;text-decoration:none}a:hover{text-decoration:underline}
+.eventselect{max-width:400px}.empty{padding:18px;border:1px dashed #c9d6e6;border-radius:11px;color:#64758b}
+.top{display:flex;justify-content:space-between;gap:14px;align-items:center;flex-wrap:wrap}
+@media(max-width:690px){.cols{grid-template-columns:1fr}.card{padding:18px}main{padding:15px 12px 60px}.head{gap:7px}h1{font-size:22px}}
+</style>
+</head><body>
+<header><div class="head"><div><div class="logo">LT · Liste Tavoli</div><small>Area capogruppo · versione stabile</small></div>
+<div class="actions"><small id="accountLabel"></small><button id="logoutBtn" type="button" class="secondary hidden">Esci</button></div></div></header>
+<main>
+<div id="globalStatus" class="status show" role="status">Connessione al database…</div>
+<section id="loginSection" class="card hidden">
+<h1>Accesso capogruppo</h1><p class="muted">Accedi con le credenziali assegnate dall'amministratore.</p>
+<form id="loginForm" novalidate><div class="field"><label for="email">Email</label><input type="email" id="email" autocomplete="username"></div>
+<div class="field"><label for="password">Password</label><input id="password" type="password" autocomplete="current-password"></div>
+<button type="submit" class="primary" id="loginBtn">Accedi</button></form>
+</section>
+<section id="workspace" class="hidden">
+<div class="top"><div><h1>Le mie liste</h1><p class="muted">Aggiungi tavoli e nominativi; ogni salvataggio viene verificato nel database.</p></div>
+<div class="field eventselect"><label for="eventSelect">Evento assegnato</label><select id="eventSelect"></select></div></div>
+<div id="eventDetails" class="status show"></div>
+<section id="eventWorkspace" class="hidden">
+<div class="card">
+<h2 id="formHeading">Nuovo tavolo</h2>
+<form id="tableForm" novalidate>
+<input id="tableId" type="hidden">
+<div class="cols"><div class="field"><label for="tableName">Nome tavolo *</label><input id="tableName" type="text" maxlength="120" placeholder="Es. Tavolo 10"></div>
+<div class="field"><label for="refName">Referente (REF) *</label><input id="refName" type="text" maxlength="150" placeholder="Nome e cognome del referente"></div></div>
+<div class="field"><label for="guestNames">Nominativi da aggiungere (uno per riga)</label>
+<textarea id="guestNames" placeholder="Mario Rossi&#10;Lucia Bianchi&#10;Andrea Verdi"></textarea>
+<p class="muted tiny">Inserisci nome e cognome per ogni persona. Se modifichi un tavolo esistente, qui puoi aggiungere nuovi nominativi senza cancellare quelli già salvati.</p></div>
+<div id="saveMsg" class="status" role="status"></div>
+<div class="actions"><button type="submit" class="primary" id="saveBtn">Salva tavolo e nominativi</button><button id="cancelBtn" type="button" class="secondary hidden">Annulla modifica</button></div>
+</form></div>
+<div class="card"><div class="top"><h2>I miei tavoli <span id="tableCount" class="badge">0</span></h2><button class="secondary" type="button" id="reloadBtn">Aggiorna elenco</button></div><p class="muted" id="guestsCount"></p><div id="tablesList"></div></div>
+</section>
+</section></main>
+<script>
+"use strict";
+(function(){
+const BASE="https://cyjuwuipfazjtkvaibpx.supabase.co";
+const KEY="sb_publishable_EJdMDREvMl5kDbMoUjW2Iw_axkQ-h6G";
+const STORE="sb-cyjuwuipfazjtkvaibpx-auth-token";
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const trim=s=>String(s??"").trim();
+let session=null,profile=null,events=[],tables=[],guests=[],activeEventId="",refreshing=null,saveActive=false;
+const visible=(el,yes)=>el.classList.toggle("hidden",!yes);
+const report=(el,msg,type="")=>{el.textContent=msg;el.className="status show"+(type?" "+type:"");};
+const busy=(id,on,label)=>{const b=$(id);if(on){b.dataset.original=b.textContent;b.textContent=label;b.disabled=true}else{b.textContent=b.dataset.original||b.textContent;b.disabled=false}};
+const romanDate=x=>new Intl.DateTimeFormat("it-IT",{dateStyle:"medium",timeZone:"Europe/Rome"}).format(new Date(x));
+const inTime=x=>new Date(x).getTime()>Date.now();
+function storeSession(s){session=s;localStorage.setItem(STORE,JSON.stringify(s))}
+function clearSession(){session=null;profile=null;localStorage.removeItem(STORE)}
+async function http(path,opts={}){
+ const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),20000);
+ try{
+  const response=await fetch(BASE+path,{...opts,signal:controller.signal});
+  const content=await response.text();
+  let value;try{value=content?JSON.parse(content):null}catch(e){value={message:content.slice(0,160)}}
+  if(!response.ok)throw new Error(String(value?.message||value?.error_description||value?.error||"Errore del server")+" (HTTP "+response.status+")");
+  return value;
+ }catch(e){if(e?.name==="AbortError")throw new Error("Il server non ha risposto entro 20 secondi.");throw e}
+ finally{clearTimeout(timer)}
+}
+async function refreshToken(){
+ if(refreshing)return refreshing;
+ refreshing=(async()=>{
+  if(!session?.refresh_token)throw new Error("Sessione scaduta. Accedi nuovamente.");
+  const newSession=await http("/auth/v1/token?grant_type=refresh_token",{
+   method:"POST",headers:{apikey:KEY,"content-type":"application/json"},
+   body:JSON.stringify({refresh_token:session.refresh_token})
+  });
+  if(!newSession?.access_token)throw new Error("Impossibile rinnovare l'accesso.");
+  storeSession({...session,...newSession,expires_at:Math.floor(Date.now()/1000)+(newSession.expires_in||3600)});
+ })();
+ try{await refreshing}finally{refreshing=null}
+}
+async function api(path,method="GET",payload,retry=0){
+ if(!session?.access_token)throw new Error("Devi effettuare l'accesso.");
+ if(session.expires_at&&session.expires_at<=Math.floor(Date.now()/1000)+60)await refreshToken();
+ const headers={apikey:KEY,authorization:"Bearer "+session.access_token};
+ if(payload!==undefined)headers["content-type"]="application/json";
+ if(method!=="GET")headers.prefer="return=representation";
+ try{return await http(path,{method,headers,body:payload===undefined?undefined:JSON.stringify(payload)})}
+ catch(e){if(retry===0&&/\bHTTP 401\b/.test(e.message)){await refreshToken();return api(path,method,payload,1)}throw e}
+}
+async function login(email,password){
+ const data=await http("/auth/v1/token?grant_type=password",{method:"POST",headers:{apikey:KEY,"content-type":"application/json"},body:JSON.stringify({email,password})});
+ if(!data?.access_token)throw new Error("Accesso non confermato.");
+ storeSession({...data,expires_at:Math.floor(Date.now()/1000)+(data.expires_in||3600)});
+}
+async function verifyLeader(){
+ const user=await api("/auth/v1/user");
+ if(!user?.id)throw new Error("Sessione non riconosciuta.");
+ const p=await api("/rest/v1/profiles?select=id%2Cfull_name%2Crole%2Cactive&id=eq."+encodeURIComponent(user.id));
+ if(!Array.isArray(p)||p.length!==1||p[0].role!=="capogruppo"||p[0].active!==true)
+  throw new Error("Questo account non è abilitato come capogruppo. Contatta l'amministratore.");
+ profile=p[0];$("accountLabel").textContent=profile.full_name||user.email||"Capogruppo";
+}
+const selectedEvent=()=>events.find(e=>e.id===activeEventId);
+const canWrite=()=>selectedEvent()?.status==="open"&&inTime(selectedEvent().deadline);
+function parseNames(raw){
+ const parsed=[],invalid=[],seen=new Set();
+ for(const line of String(raw||"").split(/\r?\n/)){
+  const name=line.trim().replace(/^[-*•\d.)\s]+/,"").replace(/\s+/g," ").trim();
+  if(!name)continue;
+  const parts=name.split(" ");
+  if(parts.length<2){invalid.push(name);continue}
+  const key=name.toLocaleLowerCase("it");
+  if(seen.has(key))continue;
+  seen.add(key);
+  parsed.push({first_name:parts.shift(),last_name:parts.join(" ")});
+ }
+ if(invalid.length)throw new Error("Aggiungi anche il cognome per: "+invalid.slice(0,5).join(", ")+(invalid.length>5?"…":""));
+ if(parsed.length>350)throw new Error("Inserisci massimo 350 persone per salvataggio.");
+ return parsed;
+}
+async function reloadEvents(){
+ const data=await api("/rest/v1/events?select=*&order=event_date.desc");
+ if(!Array.isArray(data))throw new Error("L'elenco eventi non è valido.");
+ events=data;
+ if(!events.some(e=>e.id===activeEventId))activeEventId=events[0]?.id||"";
+ const selector=$("eventSelect");
+ selector.innerHTML=events.map(e=>'<option value="'+esc(e.id)+'">'+esc(e.title)+' · '+esc(e.event_date)+'</option>').join("")||'<option value="">Nessun evento assegnato</option>';
+ selector.value=activeEventId;
+ await reloadTables();
+}
+async function reloadTables(){
+ if(!activeEventId){tables=[];guests=[];draw();return}
+ const t=await api("/rest/v1/event_tables?select=*&event_id=eq."+encodeURIComponent(activeEventId)+"&order=table_name.asc");
+ if(!Array.isArray(t))throw new Error("L'elenco tavoli non è valido.");
+ tables=t;
+ guests=t.length?await api("/rest/v1/guest_entries?select=*&table_id=in.("+t.map(x=>x.id).join(",")+")&order=created_at.asc"):[];
+ if(!Array.isArray(guests))throw new Error("L'elenco nominativi non è valido.");
+ draw();
+}
+function draw(){
+ const ev=selectedEvent(),open=canWrite();
+ if(ev){
+  const d=romanDate(ev.deadline);
+  report($("eventDetails"),escText(ev.title)+" · "+(open?"Liste aperte fino al "+d:"Liste chiuse o scadute ("+d+"). Non puoi più modificare i tavoli."),open?"success":"error");
+ }else report($("eventDetails"),"Non sei ancora assegnato a un evento. Chiedi all'amministratore di associarti a una serata.");
+ visible($("eventWorkspace"),!!ev);
+ $("saveBtn").disabled=!open;const inEdit=$("tableId").value;
+ if(!open&&inEdit)resetForm();
+ $("tableCount").textContent=String(tables.length);
+ $("guestsCount").textContent=guests.length+" nominativi totali";
+ $("tablesList").innerHTML=tables.length?tables.map(t=>{
+  const gs=guests.filter(g=>g.table_id===t.id);
+  return '<div class="record"><div class="record-head"><div><div class="record-title">TAV. '+esc(t.table_name)+'</div><div class="muted">REF '+esc(t.reference_name)+' · '+gs.length+' nominativi</div></div>'+
+   (open?'<div class="actions"><button type="button" class="secondary" data-edit="'+esc(t.id)+'">Modifica / aggiungi nomi</button><button type="button" class="danger" data-delete="'+esc(t.id)+'">Elimina tavolo</button></div>':'')+'</div>'+
+   '<div class="names">'+(gs.length?gs.map(g=>'<span class="name">'+esc(g.first_name)+' '+esc(g.last_name)+(open?' <button type="button" data-delete-guest="'+esc(g.id)+'" aria-label="Rimuovi nominativo">×</button>':'')+'</span>').join(""):'<span class="muted">Nessun invitato ancora inserito</span>')+'</div></div>';
+ }).join(""):'<div class="empty">Ancora nessun tavolo salvato. Utilizza il modulo qui sopra.</div>';
+}
+function escText(x){return String(x||"")}
+function resetForm(){
+ $("tableForm").reset();$("tableId").value="";
+ $("refName").value=profile?.full_name||"";
+ $("formHeading").textContent="Nuovo tavolo";$("saveBtn").textContent="Salva tavolo e nominativi";
+ visible($("cancelBtn"),false);
+}
+function editTable(id){
+ const t=tables.find(x=>x.id===id);if(!t)return;
+ $("tableId").value=t.id;$("tableName").value=t.table_name;$("refName").value=t.reference_name;
+ $("guestNames").value="";$("formHeading").textContent="Modifica tavolo / aggiungi nominativi";
+ $("saveBtn").textContent="Salva modifiche e nuovi nominativi";
+ visible($("cancelBtn"),true);$("tableForm").scrollIntoView({behavior:"smooth",block:"start"});
+}
+async function saveTable(ev){
+ ev.preventDefault();
+ if(saveActive)return;
+ saveActive=true;busy("saveBtn",true,"Invio a Supabase…");
+ report($("saveMsg"),"Verifico i dati e salvo il tavolo…");
+ try{
+  if(!canWrite())throw new Error("Le liste sono chiuse o la scadenza è passata.");
+  const title=trim($("tableName").value),ref=trim($("refName").value);
+  if(!title||!ref)throw new Error("Compila nome tavolo e referente (REF).");
+  const entries=parseNames($("guestNames").value);
+  const previous=$("tableId").value;
+  const details={table_name:title,reference_name:ref};
+  const result=await api("/rest/v1/event_tables"+(previous?"?id=eq."+encodeURIComponent(previous)+"&select=id":"?select=id"),previous?"PATCH":"POST",previous?details:{...details,event_id:activeEventId,leader_id:profile.id});
+  const id=result?.[0]?.id;
+  if(!id)throw new Error("Il server non ha confermato il salvataggio del tavolo.");
+  // Persist the ID BEFORE saving names: if guest insertion fails, retry cannot duplicate the table.
+  $("tableId").value=id;
+  if(entries.length){
+   report($("saveMsg"),"Tavolo salvato. Ora salvo "+entries.length+" nominativi…");
+   const rows=entries.map(n=>({...n,table_id:id,created_by:profile.id}));
+   const saved=await api("/rest/v1/guest_entries?select=id","POST",rows);
+   if(!Array.isArray(saved)||saved.length!==rows.length){
+    $("guestNames").value="";throw new Error("Inserimento nominativi non verificato: controlla l'elenco prima di reinviare.");
+   }
+   $("guestNames").value="";
+  }
+  await reloadTables();
+  if(!tables.some(t=>t.id===id))throw new Error("Tavolo salvato ma non ancora visibile dopo la verifica.");
+  const count=entries.length;
+  resetForm();
+  report($("saveMsg"),"Tavolo salvato e verificato. "+(count?count+" nominativi registrati.":"Nessun nominativo da aggiungere."),"success");
+  report($("globalStatus"),"Salvataggio completato correttamente.","success");
+ }catch(e){
+  const details=$("tableId").value?"Il tavolo ha un ID già salvato: non crearne uno nuovo. ":"";
+  report($("saveMsg"),"Salvataggio incompleto. "+details+String(e?.message||e),"error");
+  report($("globalStatus"),"Impossibile completare il salvataggio: "+String(e?.message||e),"error");
+ }finally{saveActive=false;busy("saveBtn",false);$("saveBtn").disabled=!canWrite()}
+}
+async function deleteGuest(id){
+ if(!canWrite())return;
+ if(!confirm("Rimuovere questo nominativo?"))return;
+ try{
+  const result=await api("/rest/v1/guest_entries?id=eq."+encodeURIComponent(id)+"&select=id","DELETE");
+  if(!Array.isArray(result)||result.length!==1)throw new Error("Eliminazione non confermata.");
+  await reloadTables();report($("globalStatus"),"Nominativo eliminato.","success");
+ }catch(e){report($("globalStatus"),"Impossibile eliminare il nominativo: "+e.message,"error")}
+}
+async function deleteTable(id){
+ if(!canWrite())return;
+ const t=tables.find(x=>x.id===id);if(!t)return;
+ if(!confirm('Eliminare il tavolo "'+t.table_name+'" e tutti i suoi nominativi?'))return;
+ try{
+  const result=await api("/rest/v1/event_tables?id=eq."+encodeURIComponent(id)+"&select=id","DELETE");
+  if(!Array.isArray(result)||result.length!==1)throw new Error("Eliminazione non confermata.");
+  if($("tableId").value===id)resetForm();
+  await reloadTables();report($("globalStatus"),"Tavolo eliminato.","success");
+ }catch(e){report($("globalStatus"),"Impossibile eliminare il tavolo: "+e.message,"error")}
+}
+async function run(){
+ $("tableForm").addEventListener("submit",saveTable);
+ $("loginForm").addEventListener("submit",async ev=>{
+  ev.preventDefault();busy("loginBtn",true,"Accesso…");
+  try{
+   const email=trim($("email").value),password=$("password").value;
+   if(!email||!password)throw new Error("Inserisci email e password.");
+   await login(email,password);await verifyLeader();await reloadEvents();
+   visible($("loginSection"),false);visible($("workspace"),true);visible($("logoutBtn"),true);
+   resetForm();report($("globalStatus"),"Accesso capogruppo attivo.","success");
+  }catch(e){report($("globalStatus"),"Accesso non riuscito: "+e.message,"error");visible($("loginSection"),true)}
+  finally{busy("loginBtn",false)}
+ });
+ $("logoutBtn").addEventListener("click",async()=>{
+  try{await api("/auth/v1/logout","POST")}catch(e){}
+  clearSession();visible($("workspace"),false);visible($("loginSection"),true);visible($("logoutBtn"),false);
+  $("accountLabel").textContent="";report($("globalStatus"),"Sessione terminata.");
+ });
+ $("eventSelect").addEventListener("change",async()=>{
+  activeEventId=$("eventSelect").value;resetForm();
+  try{await reloadTables();report($("globalStatus"),"Evento aggiornato.","success")}catch(e){report($("globalStatus"),"Errore nel caricamento: "+e.message,"error")}
+ });
+ $("cancelBtn").addEventListener("click",resetForm);
+ $("reloadBtn").addEventListener("click",async()=>{
+  try{await reloadEvents();report($("globalStatus"),"Dati aggiornati.","success")}catch(e){report($("globalStatus"),"Errore aggiornamento: "+e.message,"error")}
+ });
+ document.addEventListener("click",ev=>{
+  const button=ev.target.closest("[data-edit],[data-delete],[data-delete-guest]");
+  if(!button)return;
+  if(button.dataset.edit)editTable(button.dataset.edit);
+  else if(button.dataset.delete)void deleteTable(button.dataset.delete);
+  else if(button.dataset.deleteGuest)void deleteGuest(button.dataset.deleteGuest);
+ });
+ try{
+  const stored=localStorage.getItem(STORE);
+  if(stored){
+   session=JSON.parse(stored);await verifyLeader();await reloadEvents();
+   visible($("loginSection"),false);visible($("workspace"),true);visible($("logoutBtn"),true);
+   resetForm();report($("globalStatus"),"Sessione capogruppo collegata. Puoi salvare tavoli e nomi.","success");return;
+  }
+ }catch(e){clearSession();report($("globalStatus"),"Accedi nuovamente: "+e.message,"error")}
+ visible($("loginSection"),true);report($("globalStatus"),"Accedi come capogruppo per iniziare.");
+}
+run().catch(e=>{report($("globalStatus"),"Errore di avvio: "+e.message,"error");visible($("loginSection"),true)});
+})();
+</script></body></html>
