@@ -41,32 +41,32 @@ a{color:#bed5f5;text-decoration:none}a:hover{text-decoration:underline}
 @media(max-width:690px){.cols{grid-template-columns:1fr}.card{padding:18px}main{padding:15px 12px 60px}.head{gap:7px}h1{font-size:22px}}
 </style><link rel="stylesheet" href="./premium.css?v=20261110-p1">
 </head><body data-portal="leader">
-<header><div class="head"><div class="brand-lockup"><div class="brand-mark" aria-hidden="true"><span>GP</span></div><div class="brand-text"><span class="brand-kicker">EVENT OPERATIONS</span><span class="brand-name">Gestionale <i>Privé</i></span></div></div><div class="actions"><small id="accountLabel"></small><button id="logoutBtn" type="button" class="secondary hidden">Esci</button></div></div></header>
+<header><div class="head"><div class="brand-lockup"><div class="brand-mark" aria-hidden="true"><span>GP</span></div><div class="brand-text"><span class="brand-name">Gestionale <i>Privé</i></span></div></div><div class="actions"><small id="accountLabel"></small><button id="logoutBtn" type="button" class="secondary hidden">Esci</button></div></div></header>
 <main>
 <div id="globalStatus" class="status show" role="status">Connessione al database…</div>
 <section id="loginSection" class="card hidden">
-<span class="panel-kicker">ACCESSO RISERVATO · CAPOGRUPPO</span><h1>Il tuo spazio, il tuo privé.</h1><p class="muted">Entra nel tuo spazio personale per gestire tavoli e nominativi della serata.</p>
+<h1>Accesso capogruppo</h1>
 <form id="loginForm" novalidate><div class="field"><label for="email">Email</label><input type="email" id="email" autocomplete="username"></div>
 <div class="field"><label for="password">Password</label><input id="password" type="password" autocomplete="current-password"></div>
 <button type="submit" class="primary" id="loginBtn">Accedi</button></form>
 </section>
 <section id="workspace" class="hidden">
-<div class="top"><div class="page-hero"><span class="eyebrow">IL TUO SPAZIO / CAPOGRUPPO</span><h1>La tua lista, <em>la tua serata.</em></h1><p>Organizza i tavoli, aggiungi i tuoi ospiti e tieni tutto a portata di mano.</p></div><div class="field eventselect"><label for="eventSelect">Serata selezionata</label><select id="eventSelect"></select></div></div>
-<div class="gp-stats"><div class="gp-stat featured"><div class="gp-stat-label">Tavoli creati</div><div class="gp-stat-value" id="leaderStatTables">0</div><div class="gp-stat-foot"><span class="live-dot"></span> Nella tua serata</div></div><div class="gp-stat"><div class="gp-stat-label">Ospiti in lista</div><div class="gp-stat-value" id="leaderStatGuests">0</div><div class="gp-stat-foot">Nominativi registrati</div></div><div class="gp-stat"><div class="gp-stat-label">Chiusura liste</div><div class="gp-stat-value" id="leaderStatDeadline" style="font-size:27px">—</div><div class="gp-stat-foot" id="leaderStatState">Seleziona una serata</div></div></div>
+<div class="top"><div class="page-hero"><h1>Tavoli e ospiti</h1></div><div class="field eventselect"><label for="eventSelect">Serata selezionata</label><select id="eventSelect"></select></div></div>
+<div class="gp-stats"><div class="gp-stat featured"><div class="gp-stat-label">Tavoli</div><div class="gp-stat-value" id="leaderStatTables">0</div></div><div class="gp-stat"><div class="gp-stat-label">Ospiti in lista</div><div class="gp-stat-value" id="leaderStatGuests">0</div></div><div class="gp-stat"><div class="gp-stat-label">Chiusura liste</div><div class="gp-stat-value" id="leaderStatDeadline" style="font-size:27px">—</div><div class="gp-stat-foot" id="leaderStatState">Seleziona una serata</div></div></div>
 <div id="eventDetails" class="status show"></div>
 <section id="eventWorkspace" class="hidden">
-<div class="card"><div class="panel-heading"><div><span class="panel-kicker">01 / COMPILA LA TUA LISTA</span><h2 id="formHeading">Nuovo tavolo</h2></div><span class="panel-seq" aria-hidden="true">01</span></div>
+<div class="card"><div class="panel-heading"><h2 id="formHeading">Nuovo tavolo</h2></div>
 <form id="tableForm" novalidate>
 <input id="tableId" type="hidden">
 <div class="cols"><div class="field"><label for="tableName">Nome tavolo *</label><input id="tableName" type="text" maxlength="120" placeholder="Es. Tavolo 10"></div>
 <div class="field"><label for="refName">Referente (REF) *</label><input id="refName" type="text" maxlength="150" placeholder="Nome e cognome del referente"></div></div>
 <div class="field"><label for="guestNames">Nominativi da aggiungere (uno per riga)</label>
 <textarea id="guestNames" placeholder="Mario Rossi&#10;Lucia Bianchi&#10;Andrea Verdi"></textarea>
-<p class="muted tiny">Inserisci nome e cognome per ogni persona. Se modifichi un tavolo esistente, qui puoi aggiungere nuovi nominativi senza cancellare quelli già salvati.</p></div>
+<p class="muted tiny">Nome e cognome per ogni riga. I nominativi già salvati restano invariati.</p></div>
 <div id="saveMsg" class="status" role="status"></div>
 <div class="actions"><button type="submit" class="primary" id="saveBtn">Salva tavolo e nominativi</button><button id="cancelBtn" type="button" class="secondary hidden">Annulla modifica</button></div>
 </form></div>
-<div class="card"><div class="panel-heading"><div><span class="panel-kicker">02 / PANORAMICA PERSONALE</span><h2>I miei tavoli <span id="tableCount" class="badge">0</span></h2></div><span class="panel-seq" aria-hidden="true">02</span></div><div class="actions" style="margin-bottom:17px"><button class="secondary" type="button" id="reloadBtn">Aggiorna elenco</button><p class="muted" id="guestsCount" style="margin:0"></p></div><div id="tablesList"></div></div>
+<div class="card"><div class="panel-heading"><h2>I miei tavoli <span id="tableCount" class="badge">0</span></h2></div><div class="actions" style="margin-bottom:17px"><button class="secondary" type="button" id="reloadBtn">Aggiorna elenco</button><p class="muted" id="guestsCount" style="margin:0"></p></div><div id="tablesList"></div></div>
 </section>
 </section></main>
 <script>
