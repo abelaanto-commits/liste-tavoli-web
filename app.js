@@ -30,7 +30,11 @@ async function start(){try{
  supabase.auth.onAuthStateChange((evt,session)=>{if(session)s.session=session;setTimeout(async()=>{if(evt==='SIGNED_OUT'){clearPoll();s.session=null;s.me=null;renderAuth()} else if(evt==='SIGNED_IN'&&!s.me){s.session=session;await signedIn()}},0)});
 }catch(e){root.innerHTML=`<div class="auth-wrap"><div class="card">Impossibile caricare il gestionale. ${esc(e.message)}</div></div>`}}
 async function signedIn(){
- try{const {data,error}=await supabase.from('profiles').select('*').eq('id',s.session.user.id).single();if(error||!data||!data.active){await supabase.auth.signOut();throw new Error('Account non abilitato. Contatta l’amministratore.')}s.me=data;s.modal=null;s.page=staff()?'checkins':'dashboard';await refreshAll();if(isInviteLanding)passwordModal(true);}catch(e){notice(e.message,true);renderAuth()}
+ try{const {data,error}=await supabase.from('profiles').select('*').eq('id',s.session.user.id).single();if(error||!data||!data.active){await supabase.auth.signOut();throw new Error('Account non abilitato. Contatta l’amministratore.')}s.me=data;s.modal=null;s.page=staff()?'checkins':'dashboard';
+ if(admin()&&!isInviteLanding&&!new URLSearchParams(window.location.search).has('legacy')){
+  window.location.replace('./control.html');return;
+ }
+ await refreshAll();if(isInviteLanding)passwordModal(true);}catch(e){notice(e.message,true);renderAuth()}
 }
 async function refreshAll(){
  try{
@@ -66,7 +70,7 @@ function renderAuth(){
 }
 function shell(body){
  const e=current();const name=s.me.full_name||s.session?.user?.email;
- root.innerHTML=`<div class="app-shell"><aside class="side"><div class="brand"><div class="logo">LT</div> Liste Tavoli</div><nav class="nav">${routes().map(r=>`<button data-action="page" data-page="${r}" class="${s.page===r?'active':''}"><span>${icon[r]}</span> ${label[r]}</button>`).join('')}</nav><div class="sidefoot">${esc(name)}<br><span class="muted">${admin()?'Amministratore':staff()?'Addetto liste':'Capogruppo'}</span><br><button data-action="logout" class="btn small" style="margin-top:9px">Esci</button></div></aside><main class="content"><div class="topbar"><div class="heading"><h1>${label[s.page]}</h1><p>${e?esc(e.title)+' · '+dtime(e.event_date+'T12:00:00'): 'Gestionale eventi privato'}</p></div><select id="eventSelect" class="event-select" aria-label="Seleziona evento">${s.events.length?s.events.map(e=>`<option value="${e.id}" ${e.id===s.eventId?'selected':''}>${esc(e.title)} · ${esc(e.event_date)}</option>`).join(''):'<option value="">Nessun evento</option>'}</select></div>${body}<div class="footer-info">Liste Tavoli · Dati protetti da Supabase · Accesso riservato · Versione 1.7</div></main></div>${s.modal||''}`;
+ root.innerHTML=`<div class="app-shell"><aside class="side"><div class="brand"><div class="logo">LT</div> Liste Tavoli</div><nav class="nav">${routes().map(r=>`<button data-action="page" data-page="${r}" class="${s.page===r?'active':''}"><span>${icon[r]}</span> ${label[r]}</button>`).join('')}</nav><div class="sidefoot">${esc(name)}<br><span class="muted">${admin()?'Amministratore':staff()?'Addetto liste':'Capogruppo'}</span><br><button data-action="logout" class="btn small" style="margin-top:9px">Esci</button></div></aside><main class="content"><div class="topbar"><div class="heading"><h1>${label[s.page]}</h1><p>${e?esc(e.title)+' · '+dtime(e.event_date+'T12:00:00'): 'Gestionale eventi privato'}</p></div><select id="eventSelect" class="event-select" aria-label="Seleziona evento">${s.events.length?s.events.map(e=>`<option value="${e.id}" ${e.id===s.eventId?'selected':''}>${esc(e.title)} · ${esc(e.event_date)}</option>`).join(''):'<option value="">Nessun evento</option>'}</select></div>${body}<div class="footer-info">Liste Tavoli · Dati protetti da Supabase · Accesso riservato · Versione 2.0</div></main></div>${s.modal||''}`;
 }
 function dashboard(){const e=current(),ts=eventTables(),count=s.guests.length,st=s.me.role;
  if(!e)return `<div class="card placeholder">${admin()?'Crea il primo evento nella sezione Eventi.':'Non sei ancora assegnato a un evento. Contatta l’amministratore.'}</div>`;
@@ -263,18 +267,24 @@ async function onForm(ev){const form=ev.target;if(!form.id)return;ev.preventDefa
 async function onClick(ev){const btn=ev.target.closest('[data-action]');if(!btn)return;const a=btn.dataset.action,id=btn.dataset.id;
  try{
  if(a==='modalSave'){const form=btn.closest('form');if(!form)throw Error('Modulo non trovato');await onForm({target:form,preventDefault:()=>{}});return}
- if(a==='page'){s.page=btn.dataset.page;render();return}
+ if(a==='page'){
+   if(admin()&&(btn.dataset.page==='events'||btn.dataset.page==='users')){
+    window.location.href='./control.html'+(btn.dataset.page==='users'?'#users':'');
+    return;
+   }
+   s.page=btn.dataset.page;render();return
+ }
  if(a==='logout'){clearPoll();await supabase.auth.signOut();return}
  if(a==='closeModal'){s.modal=null;render();return}
  if(a==='changePassword'){passwordModal();return}
  if(a==='firstSetup'){modal('Attiva il primo amministratore',`${field('Nome e cognome','full_name','','text',true)}${field('Email','email','','email',true)}${field('Password (almeno 12 caratteri)','password','','password',true)}${field('Codice di attivazione iniziale','code','','text',true)}<p class="tiny muted">Il codice di attivazione è monouso e viene consegnato al proprietario del gestionale.</p>`,'setupForm');return}
- if(a==='eventAdd'){eventModal();return}if(a==='eventEdit'){eventModal(s.events.find(e=>e.id===id));return}
+ if(a==='eventAdd'||a==='eventEdit'){window.location.href='./control.html';return}
  if(a==='tableAdd'){tableModal();return}if(a==='tableEdit'){tableModal(s.tables.find(t=>t.id===id));return}
  if(a==='guestAdd'){guestModal(id);return}if(a==='guestEdit'){const g=s.guests.find(g=>g.id===id);guestModal(g.table_id,g);return}
  if(a==='expand'){s.expanded.has(id)?s.expanded.delete(id):s.expanded.add(id);render();return}
  if(a==='tableDelete'){if(!confirm('Eliminare il tavolo e tutti i suoi nominativi?'))return;check(await supabase.from('event_tables').delete().eq('id',id));notice('Tavolo eliminato');await refreshEvent();return}
  if(a==='guestDelete'){if(!confirm('Eliminare il nominativo?'))return;check(await supabase.from('guest_entries').delete().eq('id',id));notice('Nominativo eliminato');await refreshEvent();return}
- if(a==='userAdd'){userModal();return}if(a==='userEdit'){userModal(s.users.find(u=>u.id===id));return}
+ if(a==='userAdd'||a==='userEdit'){window.location.href='./control.html#users';return}
  if(a==='checkin'){btn.disabled=true;const result=check(await supabase.rpc('check_in_guest',{p_guest_entry_id:id}));if(result?.ok)notice('Ingresso registrato');else notice('Questa persona risulta già entrata nello stesso tavolo',true);await refreshAttendance();return}
  if(a==='undoCheckin'){if(!confirm('Annullare questa spunta di ingresso?'))return;check(await supabase.from('attendance').delete().eq('id',id));notice('Spunta annullata');await refreshAttendance();return}
  if(a==='generatePdf'){btn.disabled=true;await generatePdf();return}
