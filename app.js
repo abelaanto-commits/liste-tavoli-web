@@ -31,6 +31,10 @@ async function start(){try{
 }catch(e){root.innerHTML=`<div class="auth-wrap"><div class="card">Impossibile caricare il gestionale. ${esc(e.message)}</div></div>`}}
 async function signedIn(){
  try{const {data,error}=await supabase.from('profiles').select('*').eq('id',s.session.user.id).single();if(error||!data||!data.active){await supabase.auth.signOut();throw new Error('Account non abilitato. Contatta l’amministratore.')}s.me=data;s.modal=null;s.page=staff()?'checkins':'dashboard';
+ if(s.me.role==='capogruppo'&&!isInviteLanding){
+  // Always use the stable capogruppo console, including old ?legacy=1 links.
+  window.location.replace('./leader.html');return;
+ }
  if(admin()&&!isInviteLanding&&!new URLSearchParams(window.location.search).has('legacy')){
   window.location.replace('./control.html');return;
  }
@@ -70,7 +74,7 @@ function renderAuth(){
 }
 function shell(body){
  const e=current();const name=s.me.full_name||s.session?.user?.email;
- root.innerHTML=`<div class="app-shell"><aside class="side"><div class="brand"><div class="logo">LT</div> Liste Tavoli</div><nav class="nav">${routes().map(r=>`<button data-action="page" data-page="${r}" class="${s.page===r?'active':''}"><span>${icon[r]}</span> ${label[r]}</button>`).join('')}</nav><div class="sidefoot">${esc(name)}<br><span class="muted">${admin()?'Amministratore':staff()?'Addetto liste':'Capogruppo'}</span><br><button data-action="logout" class="btn small" style="margin-top:9px">Esci</button></div></aside><main class="content"><div class="topbar"><div class="heading"><h1>${label[s.page]}</h1><p>${e?esc(e.title)+' · '+dtime(e.event_date+'T12:00:00'): 'Gestionale eventi privato'}</p></div><select id="eventSelect" class="event-select" aria-label="Seleziona evento">${s.events.length?s.events.map(e=>`<option value="${e.id}" ${e.id===s.eventId?'selected':''}>${esc(e.title)} · ${esc(e.event_date)}</option>`).join(''):'<option value="">Nessun evento</option>'}</select></div>${body}<div class="footer-info">Liste Tavoli · Dati protetti da Supabase · Accesso riservato · Versione 2.0</div></main></div>${s.modal||''}`;
+ root.innerHTML=`<div class="app-shell"><aside class="side"><div class="brand"><div class="logo">LT</div> Liste Tavoli</div><nav class="nav">${routes().map(r=>`<button data-action="page" data-page="${r}" class="${s.page===r?'active':''}"><span>${icon[r]}</span> ${label[r]}</button>`).join('')}</nav><div class="sidefoot">${esc(name)}<br><span class="muted">${admin()?'Amministratore':staff()?'Addetto liste':'Capogruppo'}</span><br><button data-action="logout" class="btn small" style="margin-top:9px">Esci</button></div></aside><main class="content"><div class="topbar"><div class="heading"><h1>${label[s.page]}</h1><p>${e?esc(e.title)+' · '+dtime(e.event_date+'T12:00:00'): 'Gestionale eventi privato'}</p></div><select id="eventSelect" class="event-select" aria-label="Seleziona evento">${s.events.length?s.events.map(e=>`<option value="${e.id}" ${e.id===s.eventId?'selected':''}>${esc(e.title)} · ${esc(e.event_date)}</option>`).join(''):'<option value="">Nessun evento</option>'}</select></div>${body}<div class="footer-info">Liste Tavoli · Dati protetti da Supabase · Accesso riservato · Versione 2.1</div></main></div>${s.modal||''}`;
 }
 function dashboard(){const e=current(),ts=eventTables(),count=s.guests.length,st=s.me.role;
  if(!e)return `<div class="card placeholder">${admin()?'Crea il primo evento nella sezione Eventi.':'Non sei ancora assegnato a un evento. Contatta l’amministratore.'}</div>`;
