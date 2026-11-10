@@ -228,6 +228,11 @@ async function onSaveUser(ev){
   if(!data?.ok)throw new Error(data?.error||"Il server non ha confermato la creazione dell'account.");
   const uid=oldId||data.id;if(!uid)throw new Error("Account creato ma identificativo utente mancante.");
   created=!oldId;
+  // Honor the initial status selector as well as status changes on existing users.
+  if(created&&!active){
+   const stateResult=await api("/functions/v1/manage-users","POST",{action:"update_user",id:uid,active:false});
+   if(!stateResult?.ok)throw new Error(stateResult?.error||"Account creato ma impossibile impostarlo come disattivato.");
+  }
   $("userId").value=uid;$("userEmail").readOnly=true;$("userPass").required=false;
   const desired=Array.from(document.querySelectorAll('#eventChecks input:checked')).map(x=>x.value);
   const previous=assignments.filter(a=>a.user_id===uid).map(a=>a.event_id);
