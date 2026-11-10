@@ -49,7 +49,7 @@ a{color:#bdd3f3;text-decoration:none}a:hover{text-decoration:underline}
 <div class="tabs"><button type="button" id="tabEvents" class="active">Eventi</button><button type="button" id="tabUsers">Capigruppo e addetti</button></div>
 <section id="eventsSection">
 <div class="card"><h2 id="eventFormTitle">Crea evento</h2>
-<form id="eventForm">
+<form id="eventForm" novalidate>
 <input type="hidden" id="eventId">
 <div class="field"><label for="eventName">Nome evento *</label><input id="eventName" type="text" required maxlength="150"></div>
 <div class="cols"><div class="field"><label for="venue">Locale</label><input id="venue" type="text"></div>
@@ -65,7 +65,7 @@ a{color:#bdd3f3;text-decoration:none}a:hover{text-decoration:underline}
 </section>
 <section id="usersSection" class="hidden">
 <div class="card"><h2 id="userFormTitle">Crea capogruppo o addetto</h2>
-<form id="userForm"><input type="hidden" id="userId">
+<form id="userForm" novalidate><input type="hidden" id="userId">
 <div class="field"><label for="userName">Nome e cognome *</label><input id="userName" required type="text"></div>
 <div class="cols"><div class="field"><label for="userEmail">Email di accesso *</label><input id="userEmail" required type="email"></div>
 <div class="field"><label for="userPass">Password iniziale (almeno 10 caratteri) *</label><input id="userPass" type="password" minlength="10" autocomplete="new-password"></div></div>
@@ -198,6 +198,7 @@ async function onSaveEvent(ev){
  try{
   const title=str($("eventName").value),date=$("eventDate").value,dlDate=$("deadlineDate").value,dlTime=$("deadlineTime").value;
   if(!title||!date||!dlDate||!dlTime)throw new Error("Nome, data evento e data/ora di chiusura sono obbligatori.");
+  if($("pdfEmail").value&&!$("pdfEmail").checkValidity())throw new Error("L'email PDF non è valida.");
   const dt=new Date(dlDate+"T"+dlTime+":00");if(!Number.isFinite(dt.getTime()))throw new Error("Data e ora di chiusura non valide.");
   const payload={title,venue:str($("venue").value),event_date:date,deadline:dt.toISOString(),status:$("eventStatus").value,admin_email:str($("pdfEmail").value)||null};
   const id=$("eventId").value;
@@ -219,7 +220,7 @@ async function onSaveUser(ev){
  try{
   const oldId=$("userId").value,name=str($("userName").value),email=str($("userEmail").value).toLowerCase(),password=$("userPass").value;
   const role=$("userRole").value,active=$("userActive").value==="true";
-  if(!name||!email||(!oldId&&password.length<10)||(password&&password.length<10))throw new Error("Compila nome, email e password di almeno 10 caratteri.");
+  if(!name||!email.includes("@")||(!oldId&&password.length<10)||(password&&password.length<10))throw new Error("Compila nome, email valida e password di almeno 10 caratteri.");
   const data=await api("/functions/v1/manage-users","POST",{
    action:oldId?"update_user":"create_user",id:oldId||undefined,
    email,full_name:name,password,role,...(oldId?{active}:{})
