@@ -89,7 +89,7 @@ const $=id=>document.getElementById(id);
 let session=null,adminId=null,events=[],users=[],assignments=[],refreshing=null;
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const str=x=>String(x??"").trim();
-const dateRome=d=>new Intl.DateTimeFormat("en-CA",{timeZone:"Europe/Rome",year:"numeric",month:"2-digit",day:"2-digit"}).format(d);
+const dateRome=d=>new Intl.DateTimeFormat("sv-SE",{timeZone:"Europe/Rome",year:"numeric",month:"2-digit",day:"2-digit"}).format(d);
 const report=(el,msg,type="")=>{el.textContent=msg;el.className="status show"+(type?" "+type:"");};
 const show=(el,yes)=>el.classList.toggle("hidden",!yes);
 const busy=(id,on,msg)=>{const b=$(id);if(on){b.dataset.old=b.textContent;b.textContent=msg||"Salvataggio…";b.disabled=true;}else{b.textContent=b.dataset.old||b.textContent;b.disabled=false;}};
@@ -162,7 +162,7 @@ function switchTab(which){
 }
 function resetEvent(){
  $("eventForm").reset();$("eventId").value="";$("eventFormTitle").textContent="Crea evento";
- $("saveEventBtn").textContent="Salva evento";show($("cancelEventBtn"),false);
+ $("saveEventBtn").textContent="Salva evento";$("saveEventBtn").dataset.old="Salva evento";show($("cancelEventBtn"),false);
  const today=dateRome(new Date());$("eventDate").value=today;$("deadlineDate").value=today;$("deadlineTime").value="23:30";
 }
 function editEvent(id){
@@ -178,7 +178,7 @@ function editEvent(id){
 function resetUser(){
  $("userForm").reset();$("userId").value="";$("userEmail").readOnly=false;$("userPass").required=true;
  $("userRole").value="capogruppo";$("userActive").value="true";
- $("userFormTitle").textContent="Crea capogruppo o addetto";$("saveUserBtn").textContent="Salva capogruppo / addetto";
+ $("userFormTitle").textContent="Crea capogruppo o addetto";$("saveUserBtn").textContent="Salva capogruppo / addetto";$("saveUserBtn").dataset.old="Salva capogruppo / addetto";
  show($("cancelUserBtn"),false);
  document.querySelectorAll('#eventChecks input').forEach(x=>{x.checked=false});
 }
@@ -256,6 +256,7 @@ async function init(){
  });
  $("tabEvents").addEventListener("click",()=>switchTab("events"));
  $("tabUsers").addEventListener("click",()=>switchTab("users"));
+ if(location.hash==="#users")switchTab("users");
  $("cancelEventBtn").addEventListener("click",()=>resetEvent());
  $("cancelUserBtn").addEventListener("click",()=>resetUser());
  $("reloadEvents").addEventListener("click",async()=>{try{await reload();report($("globalStatus"),"Dati aggiornati dal database.","success")}catch(e){report($("globalStatus"),e.message,"error")}});
