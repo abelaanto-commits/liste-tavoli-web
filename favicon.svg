@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" role="img" aria-label="Gestionale Privé">
+<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#2b2924"/><stop offset="1" stop-color="#0f1118"/></linearGradient></defs>
+<rect x="1" y="1" width="62" height="62" rx="16" fill="url(#g)" stroke="#b9925c" stroke-width="1.6"/>
+<path d="M13 13h38v38H13z" fill="none" stroke="#b9925c" stroke-opacity=".18" stroke-width=".9"/>
+<text x="32" y="41" text-anchor="middle" fill="#e8c995" font-family="Georgia, 'Times New Roman', serif" font-style="italic" font-size="28" font-weight="bold" letter-spacing="-2">GP</text>
+</svg>
